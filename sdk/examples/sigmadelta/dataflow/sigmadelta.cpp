@@ -9,21 +9,22 @@
 #include <hpx/config.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/util/high_resolution_timer.hpp>
-
+#include <nt2/sdk/unit/perform_benchmark.hpp>
 #include <iostream>
-
 #include <boost/cstdint.hpp>
 #include <boost/format.hpp>
+#include "images.hpp"
+#include "sigmadelta_test.hpp"
+#include "sigmadelta.hpp"
+#include "pgm.hpp"
 
-#include "images.h"
-#include "benchmark.hpp"
-#include "sigmadelta_test.h"
-#include "sigmadelta.h"
-#include "pgm.h"
 
-using namespace details;
-
-HPX_REGISTER_PLAIN_ACTION(sigmadelta_action);
+/**********************************************************************************/
+/*		  Prise en compte des action par le runtime                       */
+/**********************************************************************************/
+HPX_REGISTER_PLAIN_ACTION(Mcompute_action);
+HPX_REGISTER_PLAIN_ACTION(Dcompute_action);
+HPX_REGISTER_PLAIN_ACTION(Vcompute_action);
 
 int hpx_main(boost::program_options::variables_map& vm)
 {   
@@ -38,8 +39,8 @@ int hpx_main(boost::program_options::variables_map& vm)
     
    // Lancement du Benchmark 
     std::cout << "Algorithme sigmadelta\n";
-    details::benchmark_result<cycles_t> dv;
-    details::perform_benchmark(my_test,10., dv);
+    nt2::unit::benchmark_result<nt2::details::cycles_t> dv;
+    nt2::unit::perform_benchmark(my_test,10., dv);
     std::cout << "sigmadelta : " << dv.median/(double)(h*w*Ni)<< " cpe\n";
 
    // Fin du chronomètre
@@ -53,7 +54,7 @@ int hpx_main(boost::program_options::variables_map& vm)
       nom_fichier<<"./frame_fond/fond."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";      
             
       Pgm Fond(w,h,im->Fond[n].data.begin());
-      Fond.write(nom_fichier.str()); 	  
+      Fond.write(nom_fichier.str());  
     }
  
   // Affichage des images estimee 
@@ -63,7 +64,7 @@ int hpx_main(boost::program_options::variables_map& vm)
       nom_fichier<<"./frame_estime/estime."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";      
       
       Pgm Estimee(w,h,im->Estimee[n].data.begin());
-      Estimee.write(nom_fichier.str());   
+      Estimee.write(nom_fichier.str()); 	  
     }
      
     return hpx::finalize(); // Handles HPX shutdown

@@ -5,7 +5,7 @@
 #include <boost/format.hpp>
 #include <boost/serialization/split_member.hpp>
 
-#include "matrix.h"
+#include "matrix.hpp"
 
 class Images
 {

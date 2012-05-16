@@ -1,7 +1,7 @@
 #ifndef SIGMADELTA_TEST_H
 #define SIGMADELTA_TEST_H
 
-#include "sigmadelta.h"
+#include "sigmadelta.hpp"
 
 class Sigmadelta_test
 {

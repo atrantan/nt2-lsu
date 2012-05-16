@@ -12,9 +12,9 @@
 #include <boost/format.hpp>
 #include <boost/ref.hpp>
 
-#include "pgm.h"
-#include "images.h"
-#include "matrix.h"
+#include "pgm.hpp"
+#include "images.hpp"
+#include "matrix.hpp"
 
 /**************************************************************************/
 /*		Prototypes des fonctions utilisées			  */

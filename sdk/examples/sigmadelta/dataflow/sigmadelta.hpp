@@ -9,10 +9,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/format.hpp>
 
-#include "pgm.h"
-#include "images.h"
-#include "matrix.h"
-#include "param.h"
+#include "pgm.hpp"
+#include "images.hpp"
+#include "matrix.hpp"
+#include "param.hpp"
 
 
 Images * initialisation(std::size_t h, std::size_t w, std::size_t Ni);
