@@ -12,13 +12,16 @@
 find_package(PkgConfig)
 pkg_check_modules(NT2_HPX QUIET hpx_application)
 
-if(NOT NT2_HPX_FOUND)
+find_package(Boost 1.48.0 QUIET COMPONENTS serialization regex filesystem program_options system thread chrono)
+
+if(NOT NT2_HPX_FOUND OR NOT Boost_FOUND)
   set(NT2_HPX.SDK_DEPENDENCIES_FOUND 0)
 endif()
 
-set(NT2_HPX.SDK_DEPENDENCIES_INCLUDE_DIR ${NT2_HPX_INCLUDE_DIRS})
-set(NT2_HPX.SDK_DEPENDENCIES_LIBRARIES ${NT2_HPX_LIBRARIES} hpx_component_dataflow hpx_component_iostreams hpx_serialization)
-string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_COMPILE_FLAGS "${NT2_HPX_CFLAGS}")
-string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_LINK_FLAGS "${NT2_HPX_LDFLAGS}")
+set(NT2_HPX.SDK_DEPENDENCIES_INCLUDE_DIR ${NT2_HPX_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+set(NT2_HPX.SDK_DEPENDENCIES_LIBRARY_DIR ${NT2_HPX_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+set(NT2_HPX.SDK_DEPENDENCIES_LIBRARIES ${NT2_HPX_LIBRARIES} hpx_component_dataflow hpx_component_iostreams hpx_serialization ${Boost_LIBRARIES})
+string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_COMPILE_FLAGS "${NT2_HPX_CFLAGS_OTHER}")
+string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_LINK_FLAGS "${NT2_HPX_LDFLAGS_OTHER}")
 
 set(NT2_HPX.SDK_DEPENDENCIES_EXTRA sdk core unit)
