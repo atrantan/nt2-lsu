@@ -16,7 +16,7 @@ SET(SOURCES
 ################################################################################
 FOREACH( EXAMPLE ${SOURCES})
   STRING(REGEX REPLACE ".cpp" "" EXAMPLE ${EXAMPLE})
-  nt2_module_add_example(hpx.dataflow.${EXAMPLE}.sample ${EXAMPLE}.cpp)
-  set_target_properties(hpx.dataflow.${EXAMPLE}.sample PROPERTIES
-                        COMPILE_FLAGS ${NT2_HPX_COMPILE_FLAGS})
+  # nt2_module_add_example(hpx.dataflow.${EXAMPLE}.sample ${EXAMPLE}.cpp)
+  # set_target_properties(hpx.dataflow.${EXAMPLE}.sample PROPERTIES
+  #                       COMPILE_FLAGS ${NT2_HPX_COMPILE_FLAGS})
 ENDFOREACH()
