@@ -1,19 +1,20 @@
-////////////////////////////////////////////////////////////////////////////////
-//  Copyright (c) 2012 Antoine TRAN TAN
+//==============================================================================
+//         Copyright 2003 - 2011   LASMEA UMR 6602 CNRS/Univ. Clermont II
+//         Copyright 2009 - 2011   LRI    UMR 8623 CNRS/Univ Paris Sud XI
 //
-//  Distributed under the Boost Software License, Version 1.0. (See accompanying
-//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-////////////////////////////////////////////////////////////////////////////////
-
+//          Distributed under the Boost Software License, Version 1.0.
+//                 See accompanying file LICENSE.txt or copy at
+//                     http://www.boost.org/LICENSE_1_0.txt
+//==============================================================================
 #include <hpx/hpx.hpp>
 #include <hpx/config.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/util/high_resolution_timer.hpp>
-#include <nt2/sdk/unit/perform_benchmark.hpp>
 #include <iostream>
 #include <boost/cstdint.hpp>
 #include <boost/format.hpp>
 #include "images.hpp"
+#include <nt2/sdk/unit/perform_benchmark.hpp>
 #include "sigmadelta_test.hpp"
 #include "sigmadelta.hpp"
 #include "pgm.hpp"
