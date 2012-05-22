@@ -18,7 +18,4 @@ SET(SOURCES
 FOREACH( EXAMPLE ${SOURCES})
   STRING(REGEX REPLACE ".cpp" "" EXAMPLE ${EXAMPLE})
   nt2_module_add_example(hpx.futures.${EXAMPLE}.sample ${EXAMPLE}.cpp)
-  # set_target_properties(hpx.futures.${EXAMPLE}.sample PROPERTIES
-  #                       COMPILE_FLAGS ${NT2_HPX_CFLAGS})
-  # target_link_libraries(hpx.futures.${EXAMPLE}.sample ${NT2_HPX_LIBRARIES})
 ENDFOREACH()
