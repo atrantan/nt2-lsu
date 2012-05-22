@@ -6,11 +6,17 @@
 //                 See accompanying file LICENSE.txt or copy at
 //                     http://www.boost.org/LICENSE_1_0.txt
 //==============================================================================
+
+#define HPX_ACTION_ARGUMENT_LIMIT 10
+#define HPX_FUNCTION_LIMIT 13
+#define HPX_COMPONENT_CREATE_ARGUMENT_LIMIT 10 
+
 #include <hpx/hpx.hpp>
 #include <hpx/config.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/util/high_resolution_timer.hpp>
 #include <iostream>
+#include <exception>
 #include <boost/cstdint.hpp>
 #include <boost/format.hpp>
 #include "images.hpp"
@@ -29,12 +35,12 @@ HPX_REGISTER_PLAIN_ACTION(Vcompute_action);
 
 int hpx_main(boost::program_options::variables_map& vm)
 {   
-    Sigmadelta_test my_test;    
+   Sigmadelta_test my_test;    
     
    // Recopie des parametres initiaux
     std::size_t const h(my_test.h), w(my_test.w), Ni(my_test.Ni);
     Images* im(my_test.im);
-    
+     
    // Demarrage chronomètre
     hpx::util::high_resolution_timer t;
     
@@ -48,26 +54,6 @@ int hpx_main(boost::program_options::variables_map& vm)
     char const* fmt = "Elapsed time: %1% [s]\n";
     std::cout << (boost::format(fmt) % t.elapsed());
 
-   // Affichage des images fond 
-    for (std::size_t n=0; n<Ni; n++)
-    { 	  
-      std::ostringstream nom_fichier;	
-      nom_fichier<<"./frame_fond/fond."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";      
-            
-      Pgm Fond(w,h,im->Fond[n].data.begin());
-      Fond.write(nom_fichier.str());  
-    }
- 
-  // Affichage des images estimee 
-    for (std::size_t n=0; n<Ni; n++)
-    {   
-      std::ostringstream nom_fichier;	
-      nom_fichier<<"./frame_estime/estime."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";      
-      
-      Pgm Estimee(w,h,im->Estimee[n].data.begin());
-      Estimee.write(nom_fichier.str()); 	  
-    }
-     
     return hpx::finalize(); // Handles HPX shutdown
 }
 
