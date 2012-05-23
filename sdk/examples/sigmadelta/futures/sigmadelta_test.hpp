@@ -9,6 +9,7 @@
 #ifndef NT2_SDK_EXAMPLES_SIGMADELTA_FUTURES_SIGMADELTA_TEST_HPP
 #define NT2_SDK_EXAMPLES_SIGMADELTA_FUTURES_SIGMADELTA_TEST_HPP
 
+#include <nt2/core/container/io/serialization.hpp>
 #include <hpx/hpx.hpp>
 #include <hpx/config.hpp>
 #include <hpx/hpx_init.hpp>
@@ -70,11 +71,12 @@ namespace nt2{ namespace test
     } 
     
     Images(std::size_t h_=1, std::size_t w_=1, std::size_t Ni_=1, std::size_t bi=1, std::size_t bj=1)
-      : Fond(Ni_, table_(nt2::of_size(h_,w_))), 
-        h(h_), w(w_), Ni(Ni_), bloc_i(bi), bloc_j(bj),
-        M(h_,w_),V(h_,w_,1)
+      : Fond(Ni,table_(nt2::of_size(h_,w_)))
+      , h(h_), w(w_), Ni(Ni_), bloc_i(bi), bloc_j(bj)
+      , M(nt2::of_size(h_,w_)),V(nt2::of_size(h_,w_,1))
     {
-      std::fill(Estimee.begin(), Estimee.end(), nt2::repnum(255, nt2::of_size(h_, w_))); 
+      table_ tmp = nt2::repnum(scalar_type(255), nt2::of_size(h_, w_));
+      std::fill(Estimee.begin(), Estimee.end(), tmp); 
     };
     
     std::vector<table_> I, Fond, Estimee;   // Image vector
