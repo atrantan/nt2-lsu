@@ -113,6 +113,9 @@ namespace nt2{ namespace test
   template<class T>
   int sigmadelta(std::size_t n, std::size_t ii, std::size_t jj, Images<T>* im)
   {
+    typedef T scalar_type;
+    typedef container::table<scalar_type> table_;
+
     std::size_t const N(3);
     std::size_t const & size_i(im->bloc_i);
     std::size_t const & size_j(im->bloc_j);
@@ -120,18 +123,12 @@ namespace nt2{ namespace test
     // First frame processing
     if (n < 1)
     {       
-      for(std::size_t i=0; i<size_i; i++) 
-	for(std::size_t j=0; j<size_j; j++)
-	{
-	  boost::uint8_t const & I(im->I[0](i+ii,j+jj));
-	  im->M(i+ii,j+jj) = I; 
-	  im->Fond[0](i+ii,j+jj) = I;
-	}
-      
+      im->M(nt2::_(ii,jj)) = im->I[0](nt2::_(ii,jj));
+      im->Fond[0](nt2::_(ii,jj)) = im->I[0](nt2::_(ii,jj));
       return 0;
     }
     
-    // This future waits for the results of the previous images.
+    // // This future waits for the results of the previous images.
     typename get_sigmadelta_future<int>::type  res = 
       hpx::lcos::async<typename get_sigmadelta_action<T>::type>(hpx::find_here(), n-1, ii, jj, im);
     
@@ -141,33 +138,36 @@ namespace nt2{ namespace test
     for(std::size_t i=0; i<size_i; i++)  
       for(std::size_t j=0; j<size_j; j++)
       {   	  
-	boost::uint8_t const & I(im->I[n](i+ii,j+jj));
-	boost::uint8_t d;        
-	boost::uint8_t & mt = im->M(i+ii,j+jj);
-	boost::uint8_t & vt = im->V(i+ii,j+jj);
+        boost::uint8_t const & I(im->I[n](i+ii,j+jj));
+        boost::uint8_t d;        
+        boost::uint8_t & mt = im->M(i+ii,j+jj);
+        boost::uint8_t & vt = im->V(i+ii,j+jj);
+        
+        
+
 	  
-	if (mt < I) 
-	  mt = mt + 1; 
-	else if (mt > I) 
-	  mt = mt - 1;
+        if (mt < I) 
+          mt = mt + 1; 
+        else if (mt > I) 
+          mt = mt - 1;
 	  
-	im->Fond[n](i+ii,j+jj) = mt;  
+        im->Fond[n](i+ii,j+jj) = mt;  
 	  
-	if (mt < I)
-	  d = I - mt;	      
-	else
-	  d = mt - I;
+        if (mt < I)
+          d = I - mt;	      
+        else
+          d = mt - I;
 	
-	if (d != 0) 
-	{ 
-	  if (vt < N*d) 
-	    vt = vt + 1;		
-	  else if (vt > N*d)  	 
-	    vt =  vt - 1;
-	}
+        if (d != 0) 
+        { 
+          if (vt < N*d) 
+            vt = vt + 1;		
+          else if (vt > N*d)  	 
+            vt =  vt - 1;
+        }
 	
-	if (d > vt)  
-	  im->Estimee[n](i+ii,j+jj) = 0; 
+        if (d > vt)  
+          im->Estimee[n](i+ii,j+jj) = 0; 
       }
     
     return 0;
@@ -218,7 +218,7 @@ namespace nt2{ namespace test
       for (std::size_t n=0; n<Ni; n++)
       { 
 	std::ostringstream nom_fichier;	
-	nom_fichier<<"./frame/frame."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";
+	nom_fichier<<"./frames/frame."<<std::setfill('0')<<std::setw(3)<<n<<".pgm";
 	// Pgm mon_image(nom_fichier.str()); 
 	// im_ptr->I.push_back(table_(h,w,mon_image.pixel));
       }
