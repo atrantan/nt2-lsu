@@ -10,6 +10,16 @@
 #define NT2_SDK_EXAMPLES_SIGMADELTA_FUTURES_SIGMADELTA_TEST_HPP
 
 #include <nt2/core/container/io/serialization.hpp>
+#include <nt2/sdk/meta/as_logical.hpp>
+#include <nt2/include/functions/plus.hpp>
+#include <nt2/include/functions/minus.hpp>
+#include <nt2/include/functions/splat.hpp>
+#include <nt2/include/functions/multiplies.hpp>
+#include <nt2/include/functions/if_else.hpp>
+#include <nt2/include/functions/is_less.hpp>
+#include <nt2/include/functions/is_greater.hpp>
+#include <nt2/include/functions/is_not_equal.hpp>
+#include <nt2/include/functions/abs.hpp>
 #include <hpx/hpx.hpp>
 #include <hpx/config.hpp>
 #include <hpx/hpx_init.hpp>
@@ -25,10 +35,10 @@
 #include <nt2/include/functions/repnum.hpp>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 namespace nt2{ namespace test 
 {
-  
   
   template<class T>
   class Images
@@ -115,8 +125,9 @@ namespace nt2{ namespace test
   {
     typedef T scalar_type;
     typedef container::table<scalar_type> table_;
+    typedef typename container::table<scalar_type>::value_type value_type_;
+    typedef typename nt2::meta::as_logical<value_type_>::type logical_type_;
 
-    std::size_t const N(3);
     std::size_t const & size_i(im->bloc_i);
     std::size_t const & size_j(im->bloc_j);
     
@@ -128,48 +139,63 @@ namespace nt2{ namespace test
       return 0;
     }
     
-    // // This future waits for the results of the previous images.
+    // This future waits for the results of the previous images.
     typename get_sigmadelta_future<int>::type  res = 
       hpx::lcos::async<typename get_sigmadelta_action<T>::type>(hpx::find_here(), n-1, ii, jj, im);
     
     res.get();
 
     // Nth image processing
+
+    table_ mt = im->M(nt2::_(ii,jj));
+    table_ vt = im->V(nt2::_(ii,jj));
+    logical_type_ cond;
+    value_type_ Pones(1);
+    value_type_ Zeros(0);
+    value_type_ Good(255);
+    value_type_ N(3);
+    value_type_ mul,d,inc,dec,tmp;
+
     for(std::size_t i=0; i<size_i; i++)  
       for(std::size_t j=0; j<size_j; j++)
-      {   	  
-        boost::uint8_t const & I(im->I[n](i+ii,j+jj));
-        boost::uint8_t d;        
-        boost::uint8_t & mt = im->M(i+ii,j+jj);
-        boost::uint8_t & vt = im->V(i+ii,j+jj);
+      {
+        cond = nt2::is_less(mt(i+ii,j+jj),im->I[n](i+ii,j+jj));
+        inc = nt2::if_else( cond
+                           , Pones
+                           , Zeros);
         
-        
+        dec = nt2::if_else( cond
+                           , Pones
+                           , Zeros);
+        mt(i+ii,j+jj)+=inc;
+	mt(i+ii,j+jj)-=dec;
+        tmp = mt(i+ii,j+jj) - im->I[n](i+ii,j+jj);
+        d = nt2::abs(tmp);
+        mul = N*(d);
+        cond = nt2::is_less(vt(i+ii,j+jj),mul);
+        inc = nt2::if_else( cond
+                           , Pones
+                           , Zeros);
+        tmp=vt(i+ii,j+jj)+inc;
 
-	  
-        if (mt < I) 
-          mt = mt + 1; 
-        else if (mt > I) 
-          mt = mt - 1;
-	  
-        im->Fond[n](i+ii,j+jj) = mt;  
-	  
-        if (mt < I)
-          d = I - mt;	      
-        else
-          d = mt - I;
-	
-        if (d != 0) 
-        { 
-          if (vt < N*d) 
-            vt = vt + 1;		
-          else if (vt > N*d)  	 
-            vt =  vt - 1;
-        }
-	
-        if (d > vt)  
-          im->Estimee[n](i+ii,j+jj) = 0; 
+        cond = nt2::is_greater(vt(i+ii,j+jj), mul);
+        dec = nt2::if_else( cond
+                          , Pones
+                          , Zeros);
+        tmp=vt(i+ii,j+jj)-dec;
+        
+        cond = nt2::is_not_equal(d, Zeros);
+        vt(i+ii,j+jj) = nt2::if_else( cond
+                                     , tmp
+                                     , vt(i+ii,j+jj));
+        cond = nt2::is_less(d, vt(i+ii,j+jj));
+        im->Estimee[n](i+ii,j+jj) = nt2::if_else( cond
+                                                 , Zeros
+                                                 , Good
+                                                 );
+
       }
-    
+
     return 0;
   }
 
