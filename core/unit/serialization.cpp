@@ -49,16 +49,18 @@ NT2_TEST_CASE_TPL( serialization_save, (double))//NT2_TYPES)
   out = nt2::repnum(T(12), of_size(16));
   stream< back_insert_device<buffer_type> > output_stream(buffer);
   
-  binary_oarchive oa(output_stream);
-
-  oa << out;
-
+  {// save  
+    binary_oarchive oa(output_stream);
+    oa << out;
+  }
+  
   basic_array_source<char> source(&buffer[0],buffer.size()); 
   stream< basic_array_source<char> > input_stream(source); 
-  binary_iarchive ia(input_stream); 
-  
-  ia >> in;
-  
+
+  {// load  
+    binary_iarchive ia(input_stream); 
+    ia >> in;
+  }
   for(std::size_t i = 0; i < nt2::numel(out); ++i)
     NT2_TEST_EQUAL(out(i), in(i));
 }
