@@ -7,5 +7,15 @@
 ##                     http://www.boost.org/LICENSE_1_0.txt
 ################################################################################
 
-ADD_SUBDIRECTORY(sigmadelta)
-ADD_SUBDIRECTORY(jacobi)
+SET(SOURCES
+    jacobi.cpp
+   )
+
+
+################################################################################
+# For each filename
+################################################################################
+FOREACH( EXAMPLE ${SOURCES})
+  STRING(REGEX REPLACE ".cpp" "" EXAMPLE ${EXAMPLE})
+  nt2_module_add_example(hpx.jacobi.${EXAMPLE}.sample ${EXAMPLE}.cpp)
+ENDFOREACH()
