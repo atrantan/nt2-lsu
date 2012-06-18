@@ -25,6 +25,7 @@
 #include <boost/iostreams/device/back_inserter.hpp> 
 #include <boost/proto/debug.hpp>
 #include <boost/proto/make_expr.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 #include <vector>
 #include <iostream>
@@ -120,7 +121,19 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
 
   boost::proto::display_expr(expr_out);
 
-  expr_type expr_in();
+  typedef typename boost::proto::result_of::
+  make_expr< nt2::tag::plus_
+           , nt2::container::domain
+           , typename boost::proto::result_of::
+             make_expr< nt2::tag::multiplies_
+                      , nt2::container::domain
+                      , table<T> &
+                      , table<T> &
+                      >::type
+           , table<T> &
+           >::type expr_type_in;
+  
+  expr_type_in expr_in;
 
   stream< back_insert_device<buffer_type> > output_stream(buffer);
   
@@ -129,14 +142,16 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
     oa << expr_out;
   }
   
-  // basic_array_source<char> source(&buffer[0],buffer.size()); 
-  // stream< basic_array_source<char> > input_stream(source); 
+  basic_array_source<char> source(&buffer[0],buffer.size()); 
+  stream< basic_array_source<char> > input_stream(source); 
 
-  // {// load  
-  //   binary_iarchive ia(input_stream); 
-  //   ia >> aout*bout+cout;
-  // }
-
+  {// load  
+    binary_iarchive ia(input_stream); 
+    ia >> expr_in;
+  }
+  
+  boost::proto::display_expr(expr_in);
+  
   // for(std::size_t i = 0; i < nt2::numel(out); ++i)
   //   NT2_TEST_EQUAL(out(i), in(i));
 }
