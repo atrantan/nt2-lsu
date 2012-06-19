@@ -15,7 +15,7 @@
 #include <nt2/include/functions/repnum.hpp>
 #include <nt2/include/functions/numel.hpp>
 #include <nt2/include/functions/plus.hpp>
-#include <nt2/include/functions/multiplies.hpp>
+#include <nt2/include/functions/minus.hpp>
 #include <nt2/core/container/dsl.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -23,12 +23,10 @@
 #include <boost/iostreams/stream_buffer.hpp> 
 #include <boost/iostreams/stream.hpp> 
 #include <boost/iostreams/device/back_inserter.hpp> 
-#include <boost/proto/debug.hpp>
 #include <boost/proto/make_expr.hpp>
-#include <boost/type_traits/remove_const.hpp>
+#include <boost/ref.hpp>
 
 #include <vector>
-#include <iostream>
 
 #include <nt2/sdk/unit/module.hpp>
 #include <nt2/sdk/unit/tests/relation.hpp>
@@ -68,7 +66,7 @@ NT2_TEST_CASE_TPL( serialization_table, NT2_TYPES)
     ia >> in;
   }
 
-  for(std::size_t i = 0; i < nt2::numel(out); ++i)
+  for(std::size_t i = 1; i <= nt2::numel(out); ++i)
     NT2_TEST_EQUAL(out(i), in(i));
 }
 
@@ -92,6 +90,9 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
   table<T> aout(of_size(16));
   table<T> bout(of_size(16));
   table<T> cout(of_size(16));
+  table<T> ain;
+  table<T> bin;
+  table<T> cin;
 
   aout = nt2::repnum(T(12), of_size(16));
   bout = nt2::repnum(T(3.5), of_size(16));
@@ -101,7 +102,7 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
   make_expr< nt2::tag::plus_
            , nt2::container::domain
            , typename boost::proto::result_of::
-             make_expr< nt2::tag::multiplies_
+             make_expr< nt2::tag::minus_
                       , nt2::container::domain
                       , table<T> const&
                       , table<T> const&
@@ -113,27 +114,34 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
                         make_expr< nt2::tag::plus_
                                  , nt2::container::domain
                                  >( boost::cref( boost::proto::
-                                                 make_expr< nt2::tag::multiplies_
+                                                 make_expr< nt2::tag::minus_
                                                           , nt2::container::domain
                                                           >( boost::cref(aout)
                                                            , boost::cref(bout)))
                                   , boost::cref(cout));
 
-  boost::proto::display_expr(expr_out);
-
   typedef typename boost::proto::result_of::
   make_expr< nt2::tag::plus_
            , nt2::container::domain
            , typename boost::proto::result_of::
-             make_expr< nt2::tag::multiplies_
+             make_expr< nt2::tag::minus_
                       , nt2::container::domain
-                      , table<T> &
-                      , table<T> &
+                      , table<T>&
+                      , table<T>&
                       >::type
-           , table<T> &
+           , table<T>&
            >::type expr_type_in;
   
-  expr_type_in expr_in;
+  expr_type_in expr_in = boost::proto::
+                         make_expr< nt2::tag::plus_
+                                  , nt2::container::domain
+                                  >( boost::ref(boost::proto::
+                                                make_expr< nt2::tag::minus_
+                                                         , nt2::container::domain
+                                                         >( boost::ref(ain)
+                                                            , boost::ref(bin)))
+                                               , boost::ref(cin));
+
 
   stream< back_insert_device<buffer_type> > output_stream(buffer);
   
@@ -150,8 +158,10 @@ NT2_TEST_CASE_TPL( serialization_expression, (double))//NT2_TYPES)
     ia >> expr_in;
   }
   
-  boost::proto::display_expr(expr_in);
-  
-  // for(std::size_t i = 0; i < nt2::numel(out); ++i)
-  //   NT2_TEST_EQUAL(out(i), in(i));
+  for(std::size_t i = 1; i < nt2::numel(aout); ++i)
+  {  
+    NT2_TEST_EQUAL(aout(i), ain(i));
+    NT2_TEST_EQUAL(bout(i), bin(i));
+    NT2_TEST_EQUAL(cout(i), cin(i));
+  }
 }
