@@ -6,14 +6,32 @@
 //                 See accompanying file LICENSE.txt or copy at
 //                     http://www.boost.org/LICENSE_1_0.txt
 //==============================================================================
+#include <boost/simd/sdk/config/os.hpp>
+
 #include <vector>
 #include <string>
+
+#ifdef BOOST_SIMD_OS_LINUX
+
+#elif BOOST_SIMD_OS_MAC_OS
+
+#elif BOOST_SIMD_OS_WINDOWS
+
+#endif
 
 namespace nt2 { namespace details 
 {
   bool get_args(std::vector<std::string>& args)
   {
-    return true;
+#ifdef BOOST_SIMD_OS_LINUX
+
+#elif BOOST_SIMD_OS_MAC_OS
+
+#elif BOOST_SIMD_OS_WINDOWS
+
+#else 
+    return false;
+#endif
   }
 
 } }
