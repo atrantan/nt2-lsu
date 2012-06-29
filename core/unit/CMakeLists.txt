@@ -10,6 +10,7 @@
 nt2_module_use_modules(unit hpx.sdk)
 
 set( SOURCES
+     test_main.cpp
      serialization.cpp
    )
 

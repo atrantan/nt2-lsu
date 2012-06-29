@@ -7,4 +7,4 @@
 ##                     http://www.boost.org/LICENSE_1_0.txt
 ################################################################################
 
-set(NT2_HPX.CORE_DEPENDENCIES_EXTRA sdk core unit)
+set(NT2_HPX.CORE_DEPENDENCIES_EXTRA hpx.sdk unit)
