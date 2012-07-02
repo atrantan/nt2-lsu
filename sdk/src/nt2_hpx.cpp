@@ -21,15 +21,23 @@
 int hpx_main()
 {
   std::vector<std::string> args;
-
-  BOOST_ASSERT_MSG( nt2::details::get_args(args)
+  bool condition = nt2::details::get_args(args);
+  BOOST_ASSERT_MSG( condition == true
                   , "Enable to parse command line arguments on this system."
                   );
   int argc = args.size();
-  // TODO: 
-  char **argv=0;
+  char **argv= (char**)malloc(argc*sizeof(char*));
 
-  int r = nt2::user_main(argc,argv);
+  std::vector<std::string>::iterator it = args.begin();
+  for(std::size_t i=0; i < args.size(); i++)
+  {
+    std::string tmp = *it++;
+    tmp+='\0';
+    argv[i] = (char*)malloc((tmp.size())*sizeof(char));
+    tmp.copy(argv[i], tmp.size(), 0);
+  }
+
+  nt2::user_main(argc,argv);
   return hpx::finalize();
 }
 

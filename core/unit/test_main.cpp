@@ -18,9 +18,13 @@
 #include <nt2/include/functions/fast_sin.hpp>
 #include <nt2/include/functions/sqrt.hpp>
 
+#include <iostream>
+#include <cstdlib>
 
 int main(int argc, char **argv)
 {
+  std::size_t size = atoi(argv[1]);
+  std::cout << size << std::endl;
   nt2::container::table<float, nt2::_2D> new_, old_;
   
   return 0;
