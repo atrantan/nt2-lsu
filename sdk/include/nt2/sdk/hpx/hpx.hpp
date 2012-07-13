@@ -12,13 +12,13 @@
 #include <boost/dispatch/functor/forward.hpp>
 
 namespace nt2 { namespace tag
+{
+  template<class T>
+  struct hpx_ : T
   {
-    template<class T>
-    struct hpx_ : T
-    {
-      typedef T parent;
-    };
-  } }
+    typedef T parent;
+  };
+} }
 
 BOOST_DISPATCH_COMBINE_SITE( nt2::tag::hpx_<tag::cpu_> )
 
@@ -29,5 +29,4 @@ BOOST_DISPATCH_COMBINE_SITE( nt2::tag::hpx_<tag::cpu_> )
 ////////////////////////////////////////////////////////////////////////////////
 #include <nt2/sdk/hpx/user_main_fwd.hpp>
 #define main nt2::user_main
-
 #endif

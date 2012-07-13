@@ -17,6 +17,7 @@
 #include <nt2/include/functions/sin.hpp>
 #include <nt2/include/functions/fast_sin.hpp>
 #include <nt2/include/functions/sqrt.hpp>
+#include <nt2/include/functions/repnum.hpp>
 
 #include <iostream>
 #include <cstdlib>
@@ -24,8 +25,12 @@
 int main(int argc, char **argv)
 {
   std::size_t size = atoi(argv[1]);
-  std::cout << size << std::endl;
-  nt2::container::table<float, nt2::_2D> new_, old_;
-  
+  nt2::container::table<float, nt2::_2D> new_(nt2::of_size(size,size));
+  nt2::container::table<float, nt2::_2D> old_(nt2::of_size(size,size));
+
+  old_ = nt2::repnum(float(16.0), nt2::of_size(size,size));
+
+  new_ = nt2::sqrt(old_);
+
   return 0;
 }

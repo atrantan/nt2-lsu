@@ -8,3 +8,4 @@
 ################################################################################
 
 set(NT2_HPX.CORE_DEPENDENCIES_EXTRA hpx.sdk unit)
+set(NT2_HPX.CORE_LIBRARIES optimized nt2_hpx_components debug nt2_hpx_components_d)
