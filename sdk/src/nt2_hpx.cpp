@@ -6,9 +6,6 @@
 //                 See accompanying file LICENSE.txt or copy at
 //                     http://www.boost.org/LICENSE_1_0.txt
 //==============================================================================
-#define HPX_ACTION_ARGUMENT_LIMIT 6
-#define HPX_COMPONENT_CREATE_ARGUMENT_LIMIT 6
-#define HPX_FUNCTION_LIMIT 9
 
 #include <hpx/hpx.hpp>
 #include <hpx/hpx_init.hpp>

@@ -11,7 +11,7 @@
 #include <hpx/include/components.hpp>
 #include <hpx/include/serialization.hpp>
 
-#include <nt2/core/details/servers.hpp>
+#include <nt2/core/functions/hpx/transform.hpp>
 
 HPX_REGISTER_COMPONENT_MODULE();
 
