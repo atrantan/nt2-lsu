@@ -28,5 +28,6 @@ BOOST_DISPATCH_COMBINE_SITE( nt2::tag::hpx_<tag::cpu_> )
 // entire runtime is set up) 
 ////////////////////////////////////////////////////////////////////////////////
 #include <nt2/sdk/hpx/user_main_fwd.hpp>
+#include <nt2/core/container/io/serialization.hpp>
 #define main nt2::user_main
 #endif

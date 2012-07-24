@@ -8,6 +8,7 @@
 //==============================================================================
 
 #include <nt2/table.hpp>
+#include <nt2/core/container/io/serialization.hpp>
 #include <nt2/core/utility/of_size.hpp>
 #include <nt2/include/functions/repnum.hpp>
 #include <nt2/sdk/unit/perform_benchmark.hpp>

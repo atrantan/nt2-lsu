@@ -54,12 +54,12 @@ namespace nt2{ namespace example
       // Computation of the equation
       for(std::size_t i = 0; i<iterations_; ++i)
       {   
-        new_(_(begin_+1,end_-1),_(begin_+1,end_-1)) 
-          = ( old_(_(begin_,end_-2),_(begin_+1,end_-1))
-            + old_(_(begin_+2,end_),_(begin_+1,end_-1))
-            + old_(_(begin_+1,end_-1),_(begin_,end_-2))
-            + old_(_(begin_+1,end_-1),_(begin_+2,end_))
-            )/s_t(4);
+        // new_(_(begin_+1,end_-1),_(begin_+1,end_-1)) 
+        //   = ( old_(_(begin_,end_-2),_(begin_+1,end_-1))
+        //     + old_(_(begin_+2,end_),_(begin_+1,end_-1))
+        //     + old_(_(begin_+1,end_-1),_(begin_,end_-2))
+        //     + old_(_(begin_+1,end_-1),_(begin_+2,end_))
+        //     )/s_t(4);
         
 #ifdef NT2_JACOBI_LOGGING
         std::cout << new_ << std::endl;
@@ -108,12 +108,12 @@ namespace nt2{ namespace example
         for(std::size_t i = 2; i<size_; ++i)
           for(std::size_t j = 2; j<size_; ++j)
           {  
-            new_(i,j) 
-              = ( old_(i+1,j)
-                + old_(i-1,j)
-                + old_(i,j+1)
-                + old_(i,j-1)
-                )/s_t(4);
+            // new_(i,j) 
+            //   = ( old_(i+1,j)
+            //     + old_(i-1,j)
+            //     + old_(i,j+1)
+            //     + old_(i,j-1)
+            //     )/s_t(4);
           }
 #ifdef NT2_JACOBI_LOGGING
         std::cout << new_ << std::endl;
