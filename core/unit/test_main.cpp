@@ -39,9 +39,9 @@ namespace nt2{ namespace example
       old_.resize(of_size(size_,size_));
       
       // Initialization of the first matrix
-      for(std::size_t i = 1; i<=size_; ++i)
-        for(std::size_t j = 1; j<=size_; ++j)
-          old_(i,j) = s_t(1); 
+      // for(std::size_t i = 1; i<=size_; ++i)
+      //   for(std::size_t j = 1; j<=size_; ++j)
+      //     old_(i,j) = s_t(1); 
       
 #ifdef NT2_JACOBI_LOGGING
       std::cout << old_ << std::endl;
@@ -65,7 +65,7 @@ namespace nt2{ namespace example
         std::cout << new_ << std::endl;
 #endif
         
-        boost::swap(new_,old_);
+        //        boost::swap(new_,old_);
       }
     }
    
@@ -90,9 +90,9 @@ namespace nt2{ namespace example
       old_.resize(of_size(size_,size_));
       
       // Initialization of the first matrix
-      for(std::size_t i = 1; i<=size_; ++i)
-        for(std::size_t j = 1; j<=size_; ++j)
-          old_(i,j) = s_t(1); 
+      // for(std::size_t i = 1; i<=size_; ++i)
+      //   for(std::size_t j = 1; j<=size_; ++j)
+      //     old_(i,j) = s_t(1); 
       
 #ifdef NT2_JACOBI_LOGGING
       std::cout << old_ << std::endl;
@@ -119,7 +119,7 @@ namespace nt2{ namespace example
         std::cout << new_ << std::endl;
 #endif
         
-        boost::swap(new_,old_);
+        //        boost::swap(new_,old_);
       }
     }
    

@@ -10,7 +10,7 @@
 #This is a temporary fix : TODO extend support to other platforms.
 
 find_package(PkgConfig)
-pkg_check_modules(NT2_HPX QUIET hpx_application)
+pkg_check_modules(NT2_HPX QUIET hpx_application hpx_component)
 
 find_package(Boost 1.48.0 QUIET COMPONENTS serialization regex filesystem program_options system thread chrono)
 
@@ -21,7 +21,7 @@ endif()
 set(NT2_HPX.SDK_DEPENDENCIES_INCLUDE_DIR ${NT2_HPX_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 set(NT2_HPX.SDK_DEPENDENCIES_LIBRARY_DIR ${NT2_HPX_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 set(NT2_HPX.SDK_DEPENDENCIES_LIBRARIES ${NT2_HPX_LIBRARIES} hpx_component_dataflow hpx_component_iostreams hpx_serialization ${Boost_LIBRARIES})
-set(NT2_HPX.SDK_LIBRARIES optimized nt2_hpx debug nt2_hpx_d)
+set(NT2_HPX.SDK_LIBRARIES optimized nt2_hpx hpx_component_granularity debug nt2_hpx_d)
 string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_COMPILE_FLAGS "${NT2_HPX_CFLAGS_OTHER} -DHPX_ACTION_ARGUMENT_LIMIT=6 -DHPX_COMPONENT_CREATE_ARGUMENT_LIMIT=6 -DHPX_FUNCTION_LIMIT=9")
 string(REPLACE ";" " " NT2_HPX.SDK_DEPENDENCIES_LINK_FLAGS "${NT2_HPX_LDFLAGS_OTHER}")
 

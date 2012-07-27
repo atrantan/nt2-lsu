@@ -19,17 +19,6 @@
 #include <vector>
 #include <string>
 
-HPX_REGISTER_COMPONENT_MODULE();
-
-typedef hpx::components::managed_component<
-  nt2::server::granularity
-  > granularity_type;
-
-HPX_REGISTER_MINIMAL_COMPONENT_FACTORY(granularity_type, granularity);
-
-HPX_REGISTER_ACTION_EX(nt2::server::granularity::get_action, granularity_get_action);
-HPX_REGISTER_ACTION_EX(nt2::server::granularity::set_action, granularity_set_action);
-
 int hpx_main(boost::program_options::variables_map& vm)
 {
   std::vector<std::string> args;

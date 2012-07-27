@@ -11,6 +11,7 @@ include(NT2Module)
 nt2_module_source_setup(hpx.core)
 nt2_module_configure_toolbox(hpx 1)
 
+set(BUILD_SHARED_LIBS TRUE)
 set(SOURCES nt2_hpx_components.cpp)
-
-nt2_module_add_library(nt2_hpx_components ${SOURCES})
+nt2_module_add_library(hpx_component_transforms_server ${SOURCES})
+set(BUILD_SHARED_LIBS FALSE)
