@@ -1,6 +1,8 @@
 #ifndef HPX_GMRES_TEST_H
 #define HPX_GMRES_TEST_H
 
+#include <string>
+
 #include "matrix.h"
 #include "spmatrix.h"
 #include "param.h"
@@ -17,8 +19,8 @@ class hpx_gmres_test
     Param_ptr p;
         
    // Initialize values in hpx_gemres_test ctor
-    hpx_gmres_test(std::size_t m, std::size_t N, std::size_t Nblocs)
-    :p( new Param(m,N,Nblocs) )
+    hpx_gmres_test(std::size_t m, std::size_t Nblocs, std::string Mfilename)
+    :p( new Param(m,Nblocs,Mfilename) )
     {}
     
         

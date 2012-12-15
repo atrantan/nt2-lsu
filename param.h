@@ -5,6 +5,12 @@
 #include <boost/format.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 
+extern "C" {
+#include <bebop/smc/sparse_matrix.h>
+#include <bebop/smc/sparse_matrix_ops.h>
+#include <bebop/smc/csr_matrix.h>
+}
+
 #include <iostream>
 
 #include <hpx/include/iostreams.hpp>
@@ -49,7 +55,6 @@ void serialize(Archive & ar, unsigned)
   int jbloc;
   double tol;
   double rho;
-//   Matrix<double> A;
   Spmatrix<double> A;
   Matrix<double> V;
   Matrix<double> H;
@@ -61,93 +66,78 @@ void serialize(Archive & ar, unsigned)
   std::vector<double> g;
   
     
-  Param(std::size_t m_=1, std::size_t N_=1, std::size_t Nblocs_=1):
-  m(m_),N(N_),Nblocs(Nblocs_),jbloc(N/Nblocs),
-  tol(1e-6),rho(1.0),
-  A(N,N),V(m,N),H(m,m+1),
-  t0(N), x(N),
-  c(m+1), s(m+1), g(m+1,0.0)
-  {        
-    double eps = 0.05; // set amount of asymmetry
+  Param(std::size_t m_=1, std::size_t Nblocs_=1, std::string Mfilename=""):
+  m(m_),Nblocs(Nblocs_),tol(1e-6),rho(1.0),
+  H(m,m+1), c(m+1), s(m+1), g(m+1,0.0)
+  {
+          
+    // Initialization A
+    struct sparse_matrix_t* At;
+    struct csr_matrix_t * ptr;
+    
+    At = load_sparse_matrix(MATRIX_MARKET,Mfilename.c_str());
+    if (At == NULL) 
+    {
+      std::cout<<"Unfind file\n";
+      exit(EXIT_FAILURE);
+    }
+    sparse_matrix_convert(At,CSR);
+    
+    ptr = (struct csr_matrix_t*) (At->repr);
+            
+    N = ptr->n; 
+    jbloc = N/Nblocs;
+    
+    std::size_t nnz = ptr->nnz;
+    A.height = N; 
+    A.width = N;
+    
+    A.rows.resize(N+1);
+    A.values.resize(nnz);
+    A.indices.resize(nnz);
+    
+    memcpy(&A.rows[0],ptr->rowptr,(N+1)*sizeof(int));
+    memcpy(&A.indices[0],ptr->colidx,(nnz)*sizeof(int));
+    memcpy(&A.values[0],ptr->values,(nnz)*sizeof(double));
+        
+    // Pass from zero-based indexing to one-based indexing
+    for (auto &val:A.rows)
+    val++;
+    
+    for (auto &val:A.indices)
+    val++;
+    
+    // Initialization V
+    V.height = m; 
+    V.width = N; 
+    V.data.resize(m*N);
+    
+    // Initialization t0 and x
+    t0.resize(N); 
+    x.resize(N);
+    
+    // Initialization x = x0
+    x[0]=1.0;
+    
     std::vector<double> exact(N,1.0);
     std::vector<double> b(N);
     std::vector<double> r0(N);
     
-    // Initialization x = x0
-    x[0]=1.0;
-     
-    std::size_t pas(100);
-    int idx(0);
-      
-    // Initialization A
-    for (std::size_t i = 0; i < N; i++)
-    {       
-      A.rows.push_back(idx+1);
-      
-      for (std::size_t j=0; j <i; j++)
-      {
-	if (i-j<=pas)
-	{
-	  A.values.push_back(-1.0-(i-j)*eps); idx++;
-	  A.indices.push_back(j+1);   // Warning: Fortran indices
-	}
-      }
-      
-      A.values.push_back(2.1); idx++;
-      A.indices.push_back(i+1);   // Warning: Fortran indices
-      
-      for (std::size_t j = i+1; j<N; j++)
-      {
-	if (j-i<=pas)
-	{
-	  A.values.push_back(-1.0 + (j-i)*eps); idx++;
-	  A.indices.push_back(j+1);   // Warning: Fortran indices
-	}
-      }
-    }
+    // Compute the right-hand vector        
+    char transa('N');
+    mkl_dcsrgemv(&transa,&A.height,&A.values[0],&A.rows[0],&A.indices[0],&exact[0],&b[0]);
     
-    A.rows.push_back(A.values.size()+1);
-            
-     char transa('N');
-     mkl_dcsrgemv(&transa,&A.height,&A.values[0],&A.rows[0],&A.indices[0],&exact[0],&b[0]);
-     
-     mkl_dcsrgemv(&transa,&A.height,&A.values[0],&A.rows[0],&A.indices[0],&x[0],&r0[0]);
-     cblas_daxpy(N,-1.0,&b[0],1,&r0[0],1);
-      
-     rho = cblas_dnrm2(N,&r0[0],1);
-      
-     // Initialization line 1 of V
-     for (std::size_t j = 0; j < N; j++)
-     V(0,j) = -r0[j]/rho;
-            
-     // Normalization of the tolerance
-     tol = tol*cblas_dnrm2(N,&b[0],1);
+    mkl_dcsrgemv(&transa,&A.height,&A.values[0],&A.rows[0],&A.indices[0],&x[0],&r0[0]);
+    cblas_daxpy(N,-1.0,&b[0],1,&r0[0],1);
     
-//     Initialization A
-//       for (std::size_t i = 0; i < A.height; i++)
-//       {
-//         	A(i,i) = 2.1;
-//          if (i>0) A(i-1, i) = -1+eps;
-//          if (i+1<A.height) A(i+1, i)= -1-eps;
-//       }
-//       
-//       // b = A*exact
-//       cblas_dgemv(CblasRowMajor,CblasNoTrans,A.height,A.width,
-//       1.0,&A(0,0),A.width, &exact[0],1,0.0,&b[0],1);
-//       
-//       //r0 = b - a*x0
-//       cblas_dgemv(CblasRowMajor,CblasNoTrans,A.height,A.width,
-//       -1.0,&A(0,0),A.width, &x[0],1,0.0,&r0[0],1);
-//       cblas_daxpy(b.size(),1.0,&b[0],1,&r0[0],1);
-//       
-//       rho = cblas_dnrm2(r0.size(),&r0[0],1);
-//       
-//       // Initialization line 1 of V
-//       for (std::size_t i = 0; i < V.width; i++)
-//       V(0,i) = r0[i]/rho;
-//             
-//       // Normalization of the tolerance
-//       tol = tol*cblas_dnrm2(b.size(),&b[0],1);
+    rho = cblas_dnrm2(N,&r0[0],1);
+    
+    // Initialization line 1 of V
+    for (std::size_t j = 0; j < N; j++)
+    V(0,j) = -r0[j]/rho;
+	  
+    // Normalization of the tolerance
+    tol = tol*cblas_dnrm2(N,&b[0],1);
   }
    
 };

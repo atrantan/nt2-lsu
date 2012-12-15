@@ -11,6 +11,7 @@
 #include <hpx/util/high_resolution_timer.hpp>
 
 #include <iostream>
+#include <string>
 
 #include <boost/cstdint.hpp>
 #include <boost/format.hpp>
@@ -23,11 +24,11 @@ using namespace details;
 int hpx_main(boost::program_options::variables_map& vm)
 {     
     std::size_t m = vm["m"].as<std::size_t>();
-    std::size_t N = vm["N"].as<std::size_t>();
     std::size_t Nblocs = vm["Nblocs"].as<std::size_t>();    
+    std::string Mfilename = vm["Mfilename"].as<std::string>();
     
     // Context creation    	
-    hpx_gmres_test my_test(m,N,Nblocs);      
+    hpx_gmres_test my_test(m,Nblocs,Mfilename);      
 
     // Perform benchmark
      details::benchmark_result<cycles_t> dv;
@@ -86,15 +87,16 @@ int main(int argc, char* argv[])
     , "m for the GSArnoldi function")
     ;
     desc_commandline.add_options()
-    ( "N"
-    , boost::program_options::value<std::size_t>()->default_value(10)
-    , "N for the GSArnoldi function")
-    ;
-    desc_commandline.add_options()
     ( "Nblocs"
     , boost::program_options::value<std::size_t>()->default_value(5)
     , "Nblocs for the GSArnoldi function")
     ;
+    desc_commandline.add_options()
+    ( "Mfilename"
+    , boost::program_options::value<std::string>()->default_value("/home/anotinet/Bureau/nt2-lsu/orsirr_1.mtx")
+    , "Mfilename for Gmres algorithm")
+    ;
+
 
     // Initialize and run HPX
     return hpx::init(desc_commandline, argc, argv);
