@@ -78,7 +78,7 @@ void serialize(Archive & ar, unsigned)
     At = load_sparse_matrix(MATRIX_MARKET,Mfilename.c_str());
     if (At == NULL) 
     {
-      std::cout<<"Unfind file\n";
+      std::cout<<"Unfound file\n";
       exit(EXIT_FAILURE);
     }
     sparse_matrix_convert(At,CSR);
