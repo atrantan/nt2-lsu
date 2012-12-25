@@ -3,48 +3,79 @@
 
 #include "petscksp.h"
 
+extern "C" {
+#include <bebop/smc/sparse_matrix.h>
+#include <bebop/smc/sparse_matrix_ops.h>
+#include <bebop/smc/csr_matrix.h>
+}
+
+#include <string>
+
+
 class petsc_gmres_test
 {
 public:
   Vec            x0,x,b,u;  /* approx solution, RHS, exact solution */
-  Mat            A;        /* linear system matrix */
-  KSP            ksp;     /* linear solver context */
-  PC		 prec;
-  PetscReal      norm;     /* norm of solution error */
+  Mat            A;         /* linear system matrix */
+  KSP            ksp;       /* linear solver context */
+  PC             prec;
+  PetscReal      norm;      /* norm of solution error */
   PetscReal      eps;    
-  PetscInt       i,j,k,Istart,Iend,N,m,n,its,maxits;
-  PetscScalar    v;  
+  PetscInt       i,j,k,Istart,Iend,N,Nprocs,m,n,its,maxits;
+  PetscScalar    v;
     
   petsc_gmres_test():eps(0.05),N(10),maxits(15)
   {
+    char Mfilename[100];
    
-    PetscOptionsGetInt(PETSC_NULL,"-N",&N,PETSC_NULL);
     PetscOptionsGetInt(PETSC_NULL,"-maxits",&maxits,PETSC_NULL);
+    PetscOptionsGetString(PETSC_NULL, "-Mfilename",Mfilename,100,PETSC_NULL);
     
-    m=N; n=N;
    
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 	  Compute the matrix and right-hand-side vector that define
 	  the linear system, Ax = b.
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    
-    MatCreate(PETSC_COMM_WORLD,&A);
-    MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,m,n);
-    MatSetUp(A);
-    
-    MatSetFromOptions(A);
-    
-//     MatMPIDenseSetPreallocation(A,PETSC_NULL);
-    MatGetOwnershipRange(A,&Istart,&Iend);     
-
-    for (i=Istart; i<Iend; i++) { 
-      v = 2.1;
-      MatSetValues(A,1,&i,1,&i,&v,INSERT_VALUES);
       
-      k=1;
-      if (i-k>=0) { j=i-k; v = -1.0-k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
-      if (i+k<=N-1) { j=i+k; v = -1.0+k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
+    // Initialization A
+      
+    struct sparse_matrix_t* At;
+    struct csr_matrix_t * ptr;
+
+    At = load_sparse_matrix(MATRIX_MARKET,Mfilename);
+    if (At == NULL)
+    {
+      std::cout<<"Unfound file\n";
+      exit(EXIT_FAILURE);
     }
+    sparse_matrix_convert(At,CSR);
+
+    ptr = (struct csr_matrix_t*) (At->repr);
+
+    MPI_Comm_size(PETSC_COMM_WORLD,&Nprocs);
+    N = ptr->n;
+      
+    MatCreateMPIAIJWithArrays(PETSC_COMM_WORLD,N/Nprocs,PETSC_DECIDE,N,N,ptr->rowptr,ptr->colidx,ptr->values,&A)
+      
+//    m=N; n=N;
+//    MatCreate(PETSC_COMM_WORLD,&A);
+//    MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,m,n);
+//    MatSetUp(A);
+//    MatSetFromOptions(A);
+//
+//    MatMPIDenseSetPreallocation(A,PETSC_NULL);
+//    MatGetOwnershipRange(A,&Istart,&Iend);     
+//
+//    for (i=Istart; i<Iend; i++) { 
+//      v = 2.1;
+//      MatSetValues(A,1,&i,1,&i,&v,INSERT_VALUES);
+//      
+//      k=1;
+//      if (i-k>=0) { j=i-k; v = -1.0-k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
+//      if (i+k<=N-1) { j=i+k; v = -1.0+k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
+//    }
+      
+    
 
     MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY); 
     MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);

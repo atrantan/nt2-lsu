@@ -5,8 +5,8 @@ static char help[] = "Solves a linear system in parallel with KSP.\n\
 Input parameters include:\n\
   -random_exact_sol : use a random exact solution vector\n\
   -view_exact_sol   : write exact solution vector to stdout\n\
-  -N <mesh_size>       : number of mesh points in larger\n\
-  -maxits :maximum number of iterations";
+  -N <mesh_size>    : number of mesh points in larger\n\
+  -maxits           :maximum number of iterations";
 
 /*T
    Concepts: KSP^basic parallel example;
@@ -31,6 +31,7 @@ using namespace details;
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
+
 int main(int argc,char **args)
 {   
     int nprocs;
