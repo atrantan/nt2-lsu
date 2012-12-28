@@ -4,6 +4,7 @@ project(Petsc_gmres)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x -Wall -Wextra")
 
+# petsc libraries
 set(petsc_include_dir
     "/users/parall/trantan/petsc/include"
     "/users/parall/trantan/boost_old/include"
@@ -23,9 +24,25 @@ set(petsc_lib_name
     metis
     X11    
    )
+   
+# bebob libraries
+set(bebop_lib_dir
+    "/users/parall/trantan/bebop/sparse_matrix_converter"
+    "/users/parall/trantan/bebop/bebop_util"
+   )
 
-include_directories("." ${petsc_include_dir})
-link_directories(${petsc_lib_dir})
+set(bebop_include_dir
+    "/users/parall/trantan/bebop/sparse_matrix_converter/include"
+    "/users/parall/trantan/bebop/bebop_util/include"
+   )
+
+set(bebop_lib_name 
+    sparse_matrix_converter
+    bebop_util   
+   )
+
+include_directories("." ${petsc_include_dir} ${bebop_include_dir})
+link_directories(${petsc_lib_dir} ${bebop_lib_dir})
 
 
 set(sources
@@ -33,4 +50,4 @@ set(sources
     )
 
 add_executable(petsc_gmres ${sources})
-target_link_libraries(petsc_gmres ${petsc_lib_name})
+target_link_libraries(petsc_gmres ${petsc_lib_name} ${bebop_lib_name})
