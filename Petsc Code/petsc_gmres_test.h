@@ -30,8 +30,8 @@ public:
    
     PetscOptionsGetInt(PETSC_NULL,"-maxits",&maxits,PETSC_NULL);
     PetscOptionsGetString(PETSC_NULL, "-Mfilename",Mfilename,100,PETSC_NULL);
-    
-   
+
+            
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 	  Compute the matrix and right-hand-side vector that define
 	  the linear system, Ax = b.
