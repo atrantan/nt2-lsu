@@ -24,25 +24,9 @@ set(petsc_lib_name
     metis
     X11    
    )
-   
-# bebob libraries
-set(bebop_lib_dir
-    "/users/parall/trantan/bebop/sparse_matrix_converter"
-    "/users/parall/trantan/bebop/bebop_util"
-   )
 
-set(bebop_include_dir
-    "/users/parall/trantan/bebop/sparse_matrix_converter/include"
-    "/users/parall/trantan/bebop/bebop_util/include"
-   )
-
-set(bebop_lib_name 
-    sparse_matrix_converter
-    bebop_util   
-   )
-
-include_directories("." ${petsc_include_dir} ${bebop_include_dir})
-link_directories(${petsc_lib_dir} ${bebop_lib_dir})
+include_directories("." ${petsc_include_dir})
+link_directories(${petsc_lib_dir})
 
 
 set(sources
@@ -50,4 +34,4 @@ set(sources
     )
 
 add_executable(petsc_gmres ${sources})
-target_link_libraries(petsc_gmres ${petsc_lib_name} ${bebop_lib_name})
+target_link_libraries(petsc_gmres ${petsc_lib_name})
