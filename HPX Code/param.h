@@ -85,8 +85,7 @@ void serialize(Archive & ar, unsigned)
     
     ptr = (struct csr_matrix_t*) (At->repr);
             
-    N = ptr->n; 
-    jbloc = N/Nblocs;
+    N = ptr->n;
     
     std::size_t nnz = ptr->nnz;
     A.height = N; 
@@ -99,6 +98,8 @@ void serialize(Archive & ar, unsigned)
     memcpy(&A.rows[0],ptr->rowptr,(N+1)*sizeof(int));
     memcpy(&A.indices[0],ptr->colidx,(nnz)*sizeof(int));
     memcpy(&A.values[0],ptr->values,(nnz)*sizeof(double));
+    
+    destroy_sparse_matrix(At);
         
     // Pass from zero-based indexing to one-based indexing
     for (auto &val:A.rows)

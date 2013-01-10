@@ -16,8 +16,8 @@ typedef hpx::lcos::future< std::vector<double> > Hkt_future;
 typedef hpx::lcos::future<void> w_future;
 
 std::vector<double> GS_HkAdd(std::size_t k, Hkt_future const & Hk1, Hkt_future const & Hk2);
-std::vector<double> GS_Hkcompute(Param_ptr const & p, std::size_t i, std::size_t k);
-void GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t k);
+std::vector<double> GS_Hkcompute(Param_ptr p, std::size_t i, int blocsize, std::size_t k);
+void GS_wcompute(Param_ptr p, std::size_t i, std::size_t blocsize, std::size_t k);
 
 
 #endif // GSARNOLDI_FORWARD_H

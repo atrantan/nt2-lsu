@@ -15,7 +15,7 @@ void hpx_gmres_test::operator()()
   
   std::size_t const m(p->m);
   std::size_t const N(p->N);
-  std::size_t const jbloc(p->jbloc); 
+  std::size_t const Nblocs(p->Nblocs); 
     
   // Initialization of vector x
   for(auto &f:p->x) f = 0.; p->x[0] = 1.;
@@ -34,8 +34,8 @@ void hpx_gmres_test::operator()()
     std::vector<w_future> wdeps;
     std::vector<double> Hk(k);
     
-    Hkt.reserve(10*p->Nblocs);
-    wdeps.reserve(10*p->Nblocs);
+    Hkt.reserve(2*Nblocs);
+    wdeps.reserve(Nblocs);
     
     // Launch asynchronous calculations
     for(std::size_t i=0; i<N ; i+=jbloc)
