@@ -38,8 +38,8 @@ void hpx_gmres_test::operator()()
     wdeps.reserve(Nblocs);
     
     // Launch asynchronous calculations
-    for(std::size_t i=0; i<N ; i+=jbloc)
-    Hkt.push_back( hpx::async(&GS_Hkcompute,p,i,k) );
+    for(std::size_t i=0; i<Nblocs ; i++)
+    Hkt.push_back( hpx::async(&GS_Hkcompute,p,offset[i],blocsize[i],k) );
     
     // Reduction Step	
 //         std::vector<Hkt_future>::iterator value(Hkt.begin());
@@ -56,8 +56,8 @@ void hpx_gmres_test::operator()()
     cblas_daxpy(k,1.0,&(Hkt_.get()[0]),1,&Hk[0],1);
     
     // Launch asynchronous calculations
-    for(std::size_t i=0; i<N; i+=jbloc)
-    wdeps.push_back( hpx::async(&GS_wcompute,p,i,k) );
+    for(std::size_t i=0; i<Nblocs ; i++)
+    wdeps.push_back( hpx::async(&GS_wcompute,p,offset[i],blocsize[i],k) );
   
     // Copy Hk vector
     for(std::size_t i=0; i<k; i++)
