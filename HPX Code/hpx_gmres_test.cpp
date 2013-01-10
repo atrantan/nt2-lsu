@@ -55,13 +55,13 @@ void hpx_gmres_test::operator()()
     for(auto &Hkt_:Hkt)
     cblas_daxpy(k,1.0,&(Hkt_.get()[0]),1,&Hk[0],1);
     
+        // Copy Hk vector
+    for(std::size_t i=0; i<k; i++)
+    H(k-1,i) = Hk[i];
+    
     // Launch asynchronous calculations
     for(std::size_t i=0; i<Nblocs ; i++)
     wdeps.push_back( hpx::async(&GS_wcompute,p,offset[i],blocsize[i],k) );
-  
-    // Copy Hk vector
-    for(std::size_t i=0; i<k; i++)
-    H(k-1,i) = Hk[i];
 
     // Norm step
     hpx::lcos::wait(wdeps);
