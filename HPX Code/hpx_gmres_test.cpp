@@ -3,7 +3,7 @@
 //-------------
 // Gmres_Cycle 
 //-------------   
-void hpx_gmres_test::gmres_cycle()
+double hpx_gmres_test::gmres_cycle()
 {
   std::vector<double> & c(p->c);
   std::vector<double> & s(p->s);  
@@ -21,7 +21,7 @@ void hpx_gmres_test::gmres_cycle()
   std::size_t const max_it(p->max_it);
   
   double const tol(p->tol);
-  double & rho(p->rho);
+  double rho;
   
   std::vector<r0_future> r0deps;
   
@@ -101,7 +101,7 @@ void hpx_gmres_test::gmres_cycle()
     // Update the residual norm
     rho = std::abs(g[k]); 
     
-//     std::cout<<"Res"<<it<<": "<<rho<<std::endl;
+    std::cout<<"Res"<<it<<": "<<rho<<std::endl;
     
     k++;
     it++;
@@ -110,6 +110,8 @@ void hpx_gmres_test::gmres_cycle()
   // It's time to compute the solution
   cblas_dtrsv(CblasRowMajor,CblasLower,CblasTrans,CblasNonUnit,k-1,&H(0,0),H.width,&g[0],1);
   cblas_dgemv(CblasRowMajor,CblasTrans,k-1,V.width,1.0,&V(0,0),V.width, &g[0],1,1.0,&x[0],1);
+  
+  return rho;
 }
    
 //-------------------
@@ -120,7 +122,7 @@ void hpx_gmres_test::operator()()
   std::vector<double> & x(p->x);
   double const 		tol(p->tol);
   std::size_t const 	max_it(p->max_it);
-  double & 		rho(p->rho);
+  double 		rho = 1;
     
   // Initialization of vector x
   for(auto &f:x) f = 0.; x[0] = 1.;
@@ -130,8 +132,8 @@ void hpx_gmres_test::operator()()
   
   while(it<=max_it && rho > tol)  
   {
-    // Launch a Gmres cycle
-    gmres_cycle();
+    // Launch a Gmres cycle and returns last residual norm
+    rho = gmres_cycle();
   }
 
 }
