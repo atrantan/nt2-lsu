@@ -43,10 +43,11 @@ int main(int argc,char **args)
     petsc_gmres_test my_test;
     
 //     PetscPrintf(PETSC_COMM_WORLD,"GMRES Algorithm\n");
-    details::benchmark_result<cycles_t> dv;
-    details::perform_benchmark(my_test,1.0, dv);
-    PetscPrintf(PETSC_COMM_WORLD,"%D %Fe+06\n",nprocs,dv.median/1e6);
+//     details::benchmark_result<cycles_t> dv;
+//     details::perform_benchmark(my_test,1.0, dv);
+//     PetscPrintf(PETSC_COMM_WORLD,"%D %Fe+06\n",nprocs,dv.median/1e6);
 
+    my_test();
     
     KSP &ksp(my_test.ksp); 
     Vec &u(my_test.x);

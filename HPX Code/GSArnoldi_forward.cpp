@@ -1,5 +1,21 @@
 #include "GSArnoldi_forward.h"
 
+//-------------------------
+// GMRES_r0compute Function
+//-------------------------
+void GMRES_r0compute(Param_ptr p, std::size_t i, int blocsize)
+{ 
+  std::vector<double> & x(p->x);
+  std::vector<double> & b(p->b);
+  std::vector<double> & r0(p->r0);
+
+  Spmatrix<double>    & A(p->A);
+  
+  char transa('N');
+  mkl_dcsrgemv(&transa,&blocsize,&A[A.rows[i]-1],&A.rows[i],&A.indices[A.rows[i]-1],&x[0],&r0[i]);
+  cblas_daxpy(blocsize,-1.0,&b[i],1,&r0[i],1);
+}
+
 //-------------------
 // GS_HkAdd Function
 //-------------------

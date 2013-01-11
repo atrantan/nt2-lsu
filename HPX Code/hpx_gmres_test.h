@@ -17,12 +17,15 @@ class hpx_gmres_test
   public: 
       
     Param_ptr p;
+    
+    std::size_t it;
+    
     std::vector<std::size_t> blocsize;
     std::vector<std::size_t> offset;
         
    // Initialize values in hpx_gemres_test ctor
-    hpx_gmres_test(std::size_t m, std::size_t Nblocs, std::string Mfilename)
-    :p( new Param(m,Nblocs,Mfilename) ),blocsize(Nblocs),offset(Nblocs)
+    hpx_gmres_test(std::size_t m, std::size_t max_it, std::size_t Nblocs, std::string Mfilename)
+    :p( new Param(m,max_it,Nblocs,Mfilename) ),blocsize(Nblocs),offset(Nblocs)
     {
       std::size_t N = p->N;
       
@@ -36,7 +39,9 @@ class hpx_gmres_test
       }
     }
     
-        
+   // GMRES Cycle called several times in operator()
+    void gmres_cycle();
+   
    // Compute GMRES Algorithm in hpx_gemres_test functor
     void operator()();
 };

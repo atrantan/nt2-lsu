@@ -8,9 +8,9 @@ output = 'hpx_gemres_sparse.log'
 
 os.system('echo \' \' > ' + output)
 
-for thread in range(1,13):
+for thread in range(1,7):
   if thread == 1: os.system('echo \' \' > ' + output)
-  cmd = 'numactl --localalloc ./bin/hpx_gmres --hpx:threads '+ str(thread) + ' --Mfilename ../mahindas.mtx --m 1000 --Nblocs ' + str(thread) +' >> ' + output
+  cmd = './bin/hpx_gmres --hpx:threads '+ str(thread) + ' --Mfilename "../../Example Matrices/add20.mtx" --m 1000 --max_it 30 --Nblocs ' + str(thread) +' >> ' + output
   print cmd
   os.system(cmd)
   os.system('cat ' + output)

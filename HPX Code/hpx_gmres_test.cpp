@@ -1,34 +1,48 @@
 #include "hpx_gmres_test.h"
-     
-// Compute GMRES Algorithm in hpx_gemres_test functor
-void hpx_gmres_test::operator()()
+   
+//-------------
+// Gmres_Cycle 
+//-------------   
+void hpx_gmres_test::gmres_cycle()
 {
   std::vector<double> & c(p->c);
   std::vector<double> & s(p->s);  
   std::vector<double> & g(p->g);
-  
-  double tol(p->tol);
-  
+    
   std::vector<double> & x(p->x);
+  std::vector<double> & r0(p->r0);
+  
   Matrix<double>      & V(p->V);
   Matrix<double>      & H(p->H);
   
   std::size_t const m(p->m);
   std::size_t const N(p->N);
   std::size_t const Nblocs(p->Nblocs); 
+  std::size_t const max_it(p->max_it);
+  
+  double const tol(p->tol);
+  double & rho(p->rho);
+  
+  std::vector<r0_future> r0deps;
+  
+  // Launch asynchronous calculations
+  for(std::size_t i=0; i<Nblocs ; i++)
+  r0deps.push_back( hpx::async(&GMRES_r0compute,p,offset[i],blocsize[i]) );
+   
+  hpx::lcos::wait(r0deps);
+  rho = cblas_dnrm2(N,&r0[0],1);
     
-  // Initialization of vector x
-  for(auto &f:p->x) f = 0.; p->x[0] = 1.;
-
-  // Initialization k
+  // Initialization line 1 of V
+  for (std::size_t j = 0; j < N; j++)
+  V(0,j) = -r0[j]/rho;
+  
+  // Initialization of local iteration
   std::size_t k = 1;
-
-  double rho(p->rho);
-
+  
   // Initialization of vector g
   for(auto &f:g) f = 0.; g[0]=rho;
   
-  while((rho > tol) && (k < m))  
+  while((rho > tol) && (k <= m) && (it <= max_it))  
   {
     std::vector<Hkt_future> Hkt;
     std::vector<w_future> wdeps;
@@ -55,7 +69,7 @@ void hpx_gmres_test::operator()()
     for(auto &Hkt_:Hkt)
     cblas_daxpy(k,1.0,&(Hkt_.get()[0]),1,&Hk[0],1);
     
-        // Copy Hk vector
+    // Copy Hk vector
     for(std::size_t i=0; i<k; i++)
     H(k-1,i) = Hk[i];
     
@@ -66,7 +80,7 @@ void hpx_gmres_test::operator()()
     // Norm step
     hpx::lcos::wait(wdeps);
     H(k-1,k) = cblas_dnrm2(N,&V(k,0),1);
-  
+    
     double const alpha(-1.0/H(k-1,k));
 
     cblas_dscal(N,alpha,&V(k,0),1);
@@ -85,14 +99,40 @@ void hpx_gmres_test::operator()()
     cblas_drot(1,&g[k-1],1,&g[k],1,c[k-1],s[k-1]);
 
     // Update the residual norm
-    rho = std::abs(g[k]);
-
-    k++;
+    rho = std::abs(g[k]); 
     
+//     std::cout<<"Res"<<it<<": "<<rho<<std::endl;
+    
+    k++;
+    it++;
+  }
+  
+  // It's time to compute the solution
+  cblas_dtrsv(CblasRowMajor,CblasLower,CblasTrans,CblasNonUnit,k-1,&H(0,0),H.width,&g[0],1);
+  cblas_dgemv(CblasRowMajor,CblasTrans,k-1,V.width,1.0,&V(0,0),V.width, &g[0],1,1.0,&x[0],1);
+}
+   
+//-------------------
+// GMRES Algorithm 
+//-------------------
+void hpx_gmres_test::operator()()
+{
+  std::vector<double> & x(p->x);
+  double const 		tol(p->tol);
+  std::size_t const 	max_it(p->max_it);
+  double & 		rho(p->rho);
+    
+  // Initialization of vector x
+  for(auto &f:x) f = 0.; x[0] = 1.;
+
+  // Initialization of global iteration
+  it = 1;
+  
+  while(it<=max_it && rho > tol)  
+  {
+    // Launch a Gmres cycle
+    gmres_cycle();
   }
 
-// It's time to compute the solution
-cblas_dtrsv(CblasRowMajor,CblasLower,CblasTrans,CblasNonUnit,k-1,&H(0,0),H.width,&g[0],1);
-cblas_dgemv(CblasRowMajor,CblasTrans,k-1,V.width,1.0,&V(0,0),V.width, &g[0],1,1.0,&x[0],1);
 }
 
