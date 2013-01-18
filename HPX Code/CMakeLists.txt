@@ -28,7 +28,7 @@ set(mkl_include_dir
     "/opt/intel/mkl/include"
    )
 
-set(mkl_lib_name 
+set(mkl_lib_name
     mkl_intel_lp64 
     mkl_sequential 
     mkl_core  
@@ -52,12 +52,12 @@ endforeach()
 include_directories("." ${mkl_include_dir} ${HPX_VARIABLE_INCLUDE_DIRS} ${bebop_include_dir})
 link_directories(${mkl_lib_dir} ${HPX_VARIABLE_LIBRARY_DIRS} ${bebop_lib_dir})
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/users/parall/trantan/hpx-0.9.0/share/cmake-2.8/Modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/users/parall/trantan/hpx-1.0.0/share/cmake-2.8/Modules")
 find_package(HPX)
 if (HPX_FOUND)
       message(STATUS "HPX was found.")
 endif (HPX_FOUND)
 
 add_hpx_executable(hpx_gmres ESSENTIAL SOURCES ${sources} DEPENDENCIES ${mkl_lib_name} ${bebop_lib_name})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liostreams")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -liostreams")
 

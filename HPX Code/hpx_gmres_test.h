@@ -40,7 +40,7 @@ class hpx_gmres_test
     }
     
    // GMRES Cycle called several times in operator()
-    double gmres_cycle();
+    void gmres_cycle(double & rho);
    
    // Compute GMRES Algorithm in hpx_gemres_test functor
     void operator()();

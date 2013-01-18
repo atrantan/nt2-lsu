@@ -29,8 +29,8 @@ public:
        reading from this file.
     */
       
-//     PetscViewerBinaryOpen(PETSC_COMM_WORLD,Mfilename,FILE_MODE_READ,&fd);
-            
+     PetscViewerBinaryOpen(PETSC_COMM_WORLD,Mfilename,FILE_MODE_READ,&fd);
+      
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 	  Compute the matrix and right-hand-side vector that define
 	  the linear system, Ax = b.
@@ -38,34 +38,34 @@ public:
       
     // Initialization A
     
-/*    MatCreate(PETSC_COMM_WORLD,&A);
+    MatCreate(PETSC_COMM_WORLD,&A);
     MatSetType(A,MATMPIAIJ);
     MatLoad(A,fd);
     PetscViewerDestroy(&fd);
       
-    MatGetSize(A,0,&N); */ 
+    MatGetSize(A,0,&N);
       
     m=N; n=N;
     
-   MatCreate(PETSC_COMM_WORLD,&A);
-   MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,m,n);
-   MatSetUp(A);
-   MatSetFromOptions(A);
+//   MatCreate(PETSC_COMM_WORLD,&A);
+//   MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,m,n);
+//   MatSetUp(A);
+//   MatSetFromOptions(A);
 
 //    MatMPIDenseSetPreallocation(A,PETSC_NULL);
-   MatGetOwnershipRange(A,&Istart,&Iend);     
-
-   for (i=Istart; i<Iend; i++) { 
-     v = 2.1;
-     MatSetValues(A,1,&i,1,&i,&v,INSERT_VALUES);
-     
-     k=1;
-     if (i-k>=0) { j=i-k; v = -1.0-k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
-     if (i+k<=N-1) { j=i+k; v = -1.0+k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
-   }          
-
-    MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY); 
-    MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);
+//   MatGetOwnershipRange(A,&Istart,&Iend);     
+//
+//   for (i=Istart; i<Iend; i++) { 
+//     v = 2.1;
+//     MatSetValues(A,1,&i,1,&i,&v,INSERT_VALUES);
+//     
+//     k=1;
+//     if (i-k>=0) { j=i-k; v = -1.0-k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
+//     if (i+k<=N-1) { j=i+k; v = -1.0+k*eps; MatSetValues(A,1,&i,1,&j,&v,INSERT_VALUES); }
+//   }          
+//
+//    MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY); 
+//    MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);
     
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 			      Create parallel vectors.

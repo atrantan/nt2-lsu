@@ -12,14 +12,16 @@
 #include "spmatrix.h"
 #include "benchmark.hpp"
 
-typedef hpx::lcos::future< std::vector<double> > 	Hkt_future;
-typedef hpx::lcos::future<void> 			w_future;
-typedef hpx::lcos::future<void> 			r0_future;
+typedef hpx::lcos::future<std::size_t> Hkt_future;
+typedef hpx::lcos::future<void> w_future;
+typedef hpx::lcos::future<void> r0_future;
+typedef hpx::lcos::future<void> x_future;
 
-void GMRES_r0compute(Param_ptr p, std::size_t i, int blocsize);
-std::vector<double> GS_HkAdd(std::size_t k, Hkt_future const & Hk1, Hkt_future const & Hk2);
-std::vector<double> GS_Hkcompute(Param_ptr p, std::size_t i, int blocsize, std::size_t k);
-void GS_wcompute(Param_ptr p, std::size_t i, std::size_t blocsize, std::size_t k);
+void GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize);
+std::size_t GS_HkAdd(Param_ptr const & p, std::size_t k, Hkt_future const & Hk1, Hkt_future const & Hk2);
+std::size_t GS_Hkcompute(Param_ptr const & p, std::size_t i, int blocsize, std::size_t k, std::size_t id);
+void GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::size_t k);
+void GMRES_xcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::size_t k);
 
 
 #endif // GSARNOLDI_FORWARD_H
