@@ -16,17 +16,18 @@ class hpx_gmres_test
 {
   public: 
       
-    Param_ptr p;
+    Param_ptr p;        // Pointer to GMRES context
+    std::size_t it;     // Number of iterations used
+    bool verify;        // Allows to verify the algorithm
     
-    std::size_t it;
-    
-    std::vector<std::size_t> blocsize;
-    std::vector<std::size_t> offset;
+    std::vector<std::size_t> blocsize; // Array of size Nblocs with successive blocksizes
+    std::vector<std::size_t> offset;   // Array of size Nblocs with successive offsets
         
    // Initialize values in hpx_gemres_test ctor
-    hpx_gmres_test(std::size_t m, std::size_t max_it, std::size_t Nblocs, std::string Mfilename)
-    :p( new Param(m,max_it,Nblocs,Mfilename) ),blocsize(Nblocs),offset(Nblocs)
+    hpx_gmres_test(std::size_t m, std::size_t max_it, std::size_t Nblocs, std::string Mfilename, bool verify_)
+    :p( new Param(m,max_it,Nblocs,Mfilename) ),verify(verify_) ,blocsize(Nblocs), offset(Nblocs)
     {
+      // Uniform distribution of blocks (Tiling)
       std::size_t N = p->N;
       
       blocsize[0] = N/Nblocs + (N%Nblocs>0);

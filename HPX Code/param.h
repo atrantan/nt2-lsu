@@ -80,7 +80,7 @@ void serialize(Archive & ar, unsigned)
      At = load_sparse_matrix(MATRIX_MARKET,Mfilename.c_str());
      if (At == NULL) 
      {
-       std::cout<<"Unfound file\n";
+       std::cout<<"File not found\n";
        exit(EXIT_FAILURE);
      }
      sparse_matrix_convert(At,CSR);
@@ -109,40 +109,6 @@ void serialize(Archive & ar, unsigned)
      
      for (auto &val:A.indices)
      val++;
-    
-//      double eps(0.05); int pas(3);
-//      
-//      N = 10;
-//      
-//      A.height = N; 
-//      A.width = N;
-//      
-//      A.rows.push_back(1);
-//      A.values.push_back(2.1);
-//      A.indices.push_back(1); // Warning: Fortran indices
-//
-//      A.values.push_back(-1.0+eps);
-//      A.indices.push_back(2); // Warning: Fortran indices
-//      
-//      // Initialization A
-//      for (std::size_t i = 1; i < N; i++)
-//      {
-//	A.values.push_back(-1.0-eps);
-//	A.rows.push_back(pas);
-//	A.indices.push_back(i); // Warning: Fortran indices
-//
-//	A.values.push_back(2.1);
-//	A.indices.push_back(i+1); // Warning: Fortran indices
-//
-//	if(i+1<N)
-//	{
-//	A.values.push_back(-1.0+eps);
-//	A.indices.push_back(i+2); // Warning: Fortran indices
-//	}
-//
-//	pas+=3;
-//      }
-//      A.rows.push_back(A.values.size()+1);   
 
     // Initialization V
     V.height = m+1; 

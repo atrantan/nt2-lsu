@@ -10,24 +10,27 @@ void GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize)
   Matrix<double> &      V(p->V);
   Spmatrix<double> &    A(p->A);
   
+  // SPMV
   char transa('N');
   mkl_dcsrgemv(&transa,&blocsize,&A[A.rows[i]-1],&A.rows[i],&A.indices[A.rows[i]-1],&x[0],&V(0,i));
   
-//   double * y(&V(0,0));
+//   double * y(&V(0,i));
+//   int *    row(&A.rows[i]);
 //   double * value(&A[A.rows[i]-1]);
 //   int *    col_idx(&A.indices[A.rows[i]-1]);
 //   
-//   for(std::size_t ii=i; ii<i+blocsize; ii++)
+//   for(int ii=0; ii<blocsize; ii++,row++)
 //   {
 //     double y_i = 0;
 //     
-//     for(int jj = A.rows[ii];jj<A.rows[ii+1];jj++,col_idx++,value++)
+//     for(int jj = row[0];jj<row[1];jj++,col_idx++,value++)
 //     {
 //       y_i += value[0]*x[col_idx[0]-1];
 //     }
 //     y[ii]= y_i;
 //   }
-  
+    
+  // AXPY
   cblas_daxpy(blocsize,-1.0,&b[i],1,&V(0,i),1);
 }
 
@@ -55,28 +58,29 @@ std::size_t GS_Hkcompute(Param_ptr const & p, std::size_t i, int blocsize, std::
   Spmatrix<double> &    A(p->A);
   Matrix<double> &      V(p->V);
   Matrix<double> &	Hkt(p->Hkt);
-    
-  // Matrix-Vector Product
+
+  // SPMV
   char transa('N');
   mkl_dcsrgemv(&transa,&blocsize,&A[A.rows[i]-1],&A.rows[i],&A.indices[A.rows[i]-1],&V(k-1,0),&V(k,i));
   
 //   double * x(&V(k-1,0));
-//   double * y(&V(k,0));
+//   double * y(&V(k,i));
+//   int *    row(&A.rows[i]);
 //   double * value(&A[A.rows[i]-1]);
-//   int * col_idx(&A.indices[A.rows[i]-1]);
+//   int *    col_idx(&A.indices[A.rows[i]-1]);
 //   
-//   for(std::size_t ii=i; ii<i+blocsize; ii++)
+//   for(int ii=0; ii<blocsize; ii++,row++)
 //   {
 //     double y_i = 0;
 //     
-//     for(int jj = A.rows[ii];jj<A.rows[ii+1];jj++,col_idx++,value++)
+//     for(int jj = row[0];jj<row[1];jj++,col_idx++,value++)
 //     {
 //       y_i += value[0]*x[col_idx[0]-1];
 //     }
 //     y[ii] = y_i;
 //   }
     
-  // Loop of vecdot
+  // Loop of VecDot
   for (std::size_t j=0; j<k; j++)
   Hkt(id,j) = cblas_ddot(blocsize, &V(j,i), 1, &V(k,i), 1);
   
@@ -94,7 +98,7 @@ void GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::
   
 //  cblas_dgemv(CblasRowMajor,CblasTrans,k,blocsize,-1.0,&V(0,i),V.width, &H(k-1,0),1,1.0,&V(k,i),1);
   
-  // Loop of axpy
+  // Loop of AXPY
   for (std::size_t j=0; j<k; j++)
   cblas_daxpy(blocsize,-H(k-1,j),&V(j,i),1,&V(k,i),1);
   
@@ -109,11 +113,9 @@ void GMRES_xcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, st
     Matrix<double> &      V (p->V);
     std::vector<double> & x(p->x);
     std::vector<double> & g(p->g);
-    
-    // Transpose-Vector Product
-//    cblas_dgemv(CblasRowMajor,CblasTrans,k-1,blocsize,1.0,&V(0,i),V.width, &g[0],1,1.0,&x[i],1);
-    
-     for (std::size_t j=0; j<k-1; j++)
-     cblas_daxpy(blocsize,g[j],&V(j,i),1,&x[i],1);
+
+    // Loop of AXPY
+    for (std::size_t j=0; j<k-1; j++)
+    cblas_daxpy(blocsize,g[j],&V(j,i),1,&x[i],1);
     
 }

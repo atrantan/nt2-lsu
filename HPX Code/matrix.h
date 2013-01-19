@@ -46,7 +46,7 @@ void serialize(Archive & ar, unsigned)
   Matrix(const Matrix& p) // Copy constructor (as usual)
   : height(p.height),width(p.width),data(p.data)
   {
-    std::cout<<"Constructeur par copie"<<std::endl;
+    std::cout<<"Copy constructor"<<std::endl;
   }
 
   Matrix& operator=(BOOST_COPY_ASSIGN_REF(Matrix) p) // Copy assignment
@@ -56,7 +56,7 @@ void serialize(Archive & ar, unsigned)
       width = p.width;
       data = p.data;	
       }
-      std::cout<<"Affectation par copie"<<std::endl;
+      std::cout<<"Copy assignment"<<std::endl;
       return *this;
    }
 
