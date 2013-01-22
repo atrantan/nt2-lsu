@@ -1,6 +1,6 @@
-% PACT PAPER
+% EUROPAR PAPER
 
-\documentclass[conference]{acmsig-alternate-10pt}
+\documentclass{llncs}
 \usepackage{array}
 \usepackage{multirow}
 
@@ -40,35 +40,9 @@
 
 \title{Parallel GMRES with Futures and Promises}
 
-\numberofauthors{4}
-\author{
-\alignauthor
-\small \textbf{Antoine Tran Tan} \\ %\titlenote{}\\
-       \affaddr{\small LRI, Universit\'e Paris-Sud XI}\\
-       \affaddr{\small Orsay, France}\\
-       \email{\small \texttt{antoine.trantan@lri.fr}}
-\alignauthor
-\small \textbf{Joel Falcou}\\
-       \affaddr{\small LRI, Universit\'e Paris-Sud XI}\\
-       \affaddr{\small Orsay, France}\\
-       \email{\small \texttt{joel.falcou@lri.fr}}
-\alignauthor
-\small \textbf{Daniel Etiemble}\\
-       \affaddr{\small LRI, Universit\'e Paris-Sud XI}\\
-       \affaddr{\small Orsay, France}\\
-       \email{\small \texttt{de@lri.fr}}
-\and
-\alignauthor
-\small \textbf{Bryce Adelstein-Lelbach}\\
-       \affaddr{\small CCT, Louisiana State University}\\
-       \affaddr{\small Baton Rouge, USA}\\
-       \email{\small \texttt{blelbach@cct.lsu.edu}}
-\alignauthor
-\small \textbf{Harmut Kaiser}\\
-       \affaddr{\small CCT, Louisiana State University}\\
-       \affaddr{\small Baton Rouge, USA}\\
-       \email{\small \texttt{hkaiser@cct.lsu.edu}}
-}
+\author{Antoine Tran Tan\inst{1} \and Joel Falcou\inst{1} \and
+Daniel Etiemble\inst{1} \and Bryce Adelstein-Lelbach\inst{2} \and Harmut Kaiser\inst{2}}
+\institute{LRI, Universit\'e Paris-Sud XI - Orsay, France \and CCT, Louisiana State University - Baton Rouge, USA}
 
 \maketitle
 
@@ -92,6 +66,14 @@ Parallel programming models currently provide different ways to protect data sha
 
 \subsection{Definition}
 In one hand, \emph{Futures} are objects encapsulating a value which will be availaible later. On the other hand, \emph{Promises} are objects intended to solve these \emph{Futures} using a function and a number of arguments. Programming with Futures is different from classical synchronous programming in the fact that tasks run in non-deterministic manner in time. Futures will then make it possible for applications to invoke asynchronous method without being interrupted. (cf. Figure \ref{thread})
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.5]{Images/Im1.png}
+\end{center}
+\caption{Behavioural pattern of Futures and Promises}
+\label{thread}
+\end{figure}
 
 \subsection{Example}
 Here we illustrate the mecanism of Futures with an example. Suppose we want to realize the following calculatition:   
@@ -117,25 +99,19 @@ With Futures programming, the code is written like:
   y = f3(y1.get() , y2.get());
 \end{lstlisting}
 
-\begin{figure}[h]
-\begin{center}
-\includegraphics[scale=0.5]{Images/Im1.png}
-\end{center}
-\caption{Behavioural pattern of Futures and Promises}
-\label{thread}
-\end{figure}
 
 In this example (cf. Listing \ref{exemple_future}), Futures y1 and y2 each encapsulate one asynchronous function result. Required results are obtained by calling Futures \texttt{get()} method which lead to suspension of consumer threads until these results are available. The following timing diagrams illustrate the interest of Futures in terms of parallelism: with a syntax close to the sequential program, we had written a parallel code.
 
 \begin{figure}[h]
       \begin{subfigure}[b]{0.5\textwidth}
 	      \centering
-	      \includegraphics[scale=0.5]{Images/Im2.png}
+	      \includegraphics[scale=0.4]{Images/Im2.png}
 	      \caption{Sequential program}
+	      
       \end{subfigure}
       \begin{subfigure}[b]{0.5\textwidth}
 	      \centering
-	      \includegraphics[scale=0.5]{Images/Im3.png}
+	      \includegraphics[scale=0.4]{Images/Im3.png}
 	      \caption{Program with Futures}
       \end{subfigure}\\
       
@@ -233,9 +209,6 @@ $\gamma$: Speedup of parallelism\\
 $p$: Number of processors (or cores)\\
 
 The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.
-
-\subsubsection{Evaluation on sparse systems}
-\subsubsection{Evaluation on dense systems}
 
 \section{Conclusion}
 
