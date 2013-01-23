@@ -1,0 +1,19 @@
+% EUROPAR PAPER
+
+\documentclass{llncs}
+
+\begin{document}
+
+\title{Parallel GMRES with Futures and Promises}
+
+\author{Antoine Tran Tan\inst{1} \and Bryce Adelstein-Lelbach\inst{2} \and Joel Falcou\inst{1} \and Harmut Kaiser\inst{2} \and
+Daniel Etiemble\inst{1} }
+\institute{LRI, Universit\'e Paris-Sud XI - Orsay, France \and CCT, Louisiana State University - Baton Rouge, USA}
+
+\maketitle
+
+\begin{abstract}
+The exponential increment of Flops and execution units implies to develop more and more sophisticated tools, but it is still difficult to take advantage of new architectures peak performances. In this context, new paradigms are invistigated such as Parallex: an execution model allowing asynchronous calculations with use of \emph{Futures} and \emph{Promises} semantic. In this paper, we will discuss an evaluation of Parallex by implementing the scientific calculating problem GMRES, and by examining performance in relation to conventional parallel programming models. This paper will thus expose one of the major interests of Parallex which is to better express asynchronous calculations while keeping a reasonable scalability. 
+\end{abstract}
+
+\end{document}
