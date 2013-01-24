@@ -26,17 +26,19 @@ void hpx_gmres_test::gmres_cycle(double & rho)
   
   std::vector<r0_future> r0deps;
   r0deps.reserve(Nblocs);
+  
+  double dotr0= 0.;
 
   for(std::size_t i=0; i<Nblocs ; i++)
   r0deps.push_back( hpx::async(&GMRES_V0compute,p,offset[i],blocsize[i]) );
     
-  hpx::lcos::wait(r0deps);  
+  for (auto&f:r0deps)
+  dotr0 +=f.get();
   
-  rho = cblas_dnrm2(N,&V(0,0),1);
+  rho = sqrt(dotr0);
   
   double const alpha(-1./rho);
   cblas_dscal(N,alpha,&V(0,0),1);
-  
   
   // Initialization of local iteration
   std::size_t k=1;
@@ -81,10 +83,13 @@ void hpx_gmres_test::gmres_cycle(double & rho)
     for(std::size_t i=0; i<Nblocs ; i++)
     wdeps.push_back( hpx::async(&GS_wcompute,p,offset[i],blocsize[i],k) );
 
-    // Norm step for Vk vector
-    hpx::lcos::wait(wdeps);
-     
-    H(k-1,k) = cblas_dnrm2(N,&V(k,0),1);
+    double dotw= 0.;
+    
+    for (auto&f:wdeps)
+    dotw +=f.get();
+    
+    H(k-1,k) = sqrt(dotw);
+    
     double const beta(1.0/H(k-1,k));
     cblas_dscal(N,beta,&V(k,0),1);
     
@@ -103,6 +108,7 @@ void hpx_gmres_test::gmres_cycle(double & rho)
 
     // Update the residual norm
     rho = std::abs(g[k]); 
+    
     if(verify)
     {
         std::cout<<"Res"<<it<<": "<<rho<<std::endl;

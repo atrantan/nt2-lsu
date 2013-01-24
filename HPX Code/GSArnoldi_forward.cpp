@@ -3,7 +3,7 @@
 //-------------------------
 // GMRES_V0compute Function
 //-------------------------
-void GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize)
+double GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize)
 { 
   std::vector<double> & x(p->x);
   std::vector<double> & b(p->b);
@@ -31,7 +31,9 @@ void GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize)
 //   }
     
   // AXPY
-  cblas_daxpy(blocsize,-1.0,&b[i],1,&V(0,i),1);
+   cblas_daxpy(blocsize,-1.0,&b[i],1,&V(0,i),1);
+   
+   return cblas_ddot(blocsize, &V(0,i), 1, &V(0,i), 1);
 }
 
 //-------------------
@@ -90,7 +92,7 @@ std::size_t GS_Hkcompute(Param_ptr const & p, std::size_t i, int blocsize, std::
 //----------------------
 // GS_wcompute Function
 //----------------------
-void GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::size_t k)
+double GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::size_t k)
 { 
 
   Matrix<double> &      V (p->V);
@@ -101,6 +103,8 @@ void GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::
   // Loop of AXPY
   for (std::size_t j=0; j<k; j++)
   cblas_daxpy(blocsize,-H(k-1,j),&V(j,i),1,&V(k,i),1);
+  
+  return cblas_ddot(blocsize, &V(k,i), 1, &V(k,i), 1);
   
 }
 
