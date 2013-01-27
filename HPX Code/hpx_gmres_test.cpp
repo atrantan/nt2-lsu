@@ -9,11 +9,10 @@ void hpx_gmres_test::gmres_cycle(double & rho)
   std::vector<double> & s(p->s);  
   std::vector<double> & g(p->g);
   
-  Matrix<double>      & V(p->V);
   Matrix<double>      & H(p->H);
+  Matrix<double>      & V(p->V);
   Matrix<double>      &	Hkt(p->Hkt);
 
-  
   std::size_t const m(p->m);
   std::size_t const N(p->N);
   
@@ -21,8 +20,11 @@ void hpx_gmres_test::gmres_cycle(double & rho)
   std::size_t const max_it(p->max_it);
   
   double const tol(p->tol);
+  
+  // Initialization of local iteration
+  std::size_t k=1;
 
-// Parallel V0 computation
+  // Parallel V0 computation
   
   std::vector<r0_future> r0deps;
   r0deps.reserve(Nblocs);
@@ -37,24 +39,30 @@ void hpx_gmres_test::gmres_cycle(double & rho)
   
   rho = sqrt(dotr0);
   
-  double const alpha(-1./rho);
-  cblas_dscal(N,alpha,&V(0,0),1);
-  
-  // Initialization of local iteration
-  std::size_t k=1;
+  // Constant for Vk normalization
+  double alpha = -1./rho;
   
   // Initialization of vector g
   for(auto &f:g) f=0.; g[0]=rho;
   
   while((rho > tol) && (k <= m) && (it <= max_it))  
   {
+//     std::vector<Vk_future> Vkdeps;
     std::vector<Hkt_future> Hkdeps;
     std::vector<w_future> wdeps;
       
     std::vector<double> Hk(k);
 
+//     Vkdeps.reserve(Nblocs);
     Hkdeps.reserve(2*Nblocs);
     wdeps.reserve(Nblocs);
+    
+//     for(std::size_t i=0; i<Nblocs ; i++)
+//     Vkdeps.push_back( hpx::async(&GS_VkScale,p,offset[i],blocsize[i],k-1,alpha) );
+//     hpx::lcos::wait(Vkdeps);
+    
+    // Vk scale
+    cblas_dscal(N,alpha,&V(k-1,0),1);
     
    // Launch asynchronous computation of Hk vector
     for(std::size_t i=0; i<Nblocs ; i++)
@@ -88,10 +96,8 @@ void hpx_gmres_test::gmres_cycle(double & rho)
     for (auto&f:wdeps)
     dotw +=f.get();
     
-    H(k-1,k) = sqrt(dotw);
-    
-    double const beta(1.0/H(k-1,k));
-    cblas_dscal(N,beta,&V(k,0),1);
+    H(k-1,k) = sqrt(dotw);    
+    alpha = 1.0/H(k-1,k);
     
     // Sequential Givens rotations
     if (k>1)
@@ -126,7 +132,7 @@ void hpx_gmres_test::gmres_cycle(double & rho)
   
   // Launch asynchronous computation of x  
   for(std::size_t i=0; i<Nblocs ; i++)  
-  xdeps.push_back( hpx::async(&GMRES_xcompute,p,offset[i],blocsize[i],k) );   
+  xdeps.push_back( hpx::async(&GMRES_xcompute,p,offset[i],blocsize[i],k-1) );   
   hpx::lcos::wait(xdeps);
 }
    

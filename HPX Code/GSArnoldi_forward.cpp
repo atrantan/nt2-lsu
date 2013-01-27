@@ -36,6 +36,13 @@ double GMRES_V0compute(Param_ptr const & p, std::size_t i, int blocsize)
    return cblas_ddot(blocsize, &V(0,i), 1, &V(0,i), 1);
 }
 
+void GS_VkScale(Param_ptr const & p, std::size_t i, int blocsize, std::size_t k, double const & alpha)
+{
+  Matrix<double> & V(p->V);
+  
+  cblas_dscal(blocsize,alpha,&V(k,i),1); 
+}
+
 //-------------------
 // GS_HkAdd Function
 //-------------------
@@ -112,14 +119,13 @@ double GS_wcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std
 // GMRES_xcompute Function
 //----------------------
 void GMRES_xcompute(Param_ptr const & p, std::size_t i, std::size_t blocsize, std::size_t k)
-{
-    
+{   
     Matrix<double> &      V (p->V);
     std::vector<double> & x(p->x);
     std::vector<double> & g(p->g);
 
     // Loop of AXPY
-    for (std::size_t j=0; j<k-1; j++)
+    for (std::size_t j=0; j<k; j++)
     cblas_daxpy(blocsize,g[j],&V(j,i),1,&x[i],1);
     
 }
