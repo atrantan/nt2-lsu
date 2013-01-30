@@ -51,14 +51,16 @@ Daniel Etiemble\inst{1} }
 \maketitle
 
 \begin{abstract}
-The exponential growth of FLOPS requires the development of more sophisticated
-programming tools, \fxwarning*{Why is it difficult?}{but it is still difficult
-to fully utilize new architectures}. In this context, new paradigms are
-investigated such as ParalleX \cite{ParalleX}, an execution model enabling
-asynchronous calculations. This paper uses HPX, a library implementing the
-ParalleX execution model, to implement the GMRES operation from
-BLAS\cite{GMRES}. \emph{Futures}, a mechanism of asynchrony supported by
-ParalleX, are used to expose parallelism in our implementation. We will examine
+The exponential growth of available FLOPS requires the development of 
+more sophisticated programming tools enabling significantly improved 
+application efficiency and scalability on current and future architectures. 
+We investigate the new execution model ParalleX \cite{ParalleX}, 
+which defines a work queue based, message driven, fine grain parallelization 
+scheme based on a global address space for highly asynchronous calculations. 
+This paper uses HPX\cite{hpx}, a C++ library implementing the 
+ParalleX execution model, to realize the GMRES operation from
+BLAS\cite{GMRES}. \emph{Futures}\cite{futures}, a mechanism of asynchrony supported by
+ParalleX, are used to expose parallelism in our implementation. We examine
 the performance of this new HPX GMRES code, relative to conventional parallel
 GMRES implementations. 
 \end{abstract}

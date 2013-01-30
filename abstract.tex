@@ -13,7 +13,19 @@ Daniel Etiemble\inst{1} }
 \maketitle
 
 \begin{abstract}
-The exponential increment of Flops and execution units implies to develop more and more sophisticated tools, but it is still difficult to take advantage of new architectures peak performances. In this context, new paradigms are invistigated such as Parallex: an execution model allowing asynchronous calculations with use of \emph{Futures} and \emph{Promises} semantic. In this paper, we will discuss an evaluation of Parallex by implementing the scientific calculating problem GMRES, and by examining performance in relation to conventional parallel programming models. This paper will thus expose one of the major interests of Parallex which is to better express asynchronous calculations while keeping a reasonable scalability. 
+The exponential growth of available FLOPS requires the development of 
+more sophisticated programming tools enabling significantly improved 
+application efficiency and scalability on current and future architectures. 
+We investigate the new execution model ParalleX, 
+which defines a work queue based, message driven, fine grain parallelization 
+scheme based on a global address space for highly asynchronous calculations. 
+This paper uses HPX, a C++ library implementing the 
+ParalleX execution model, to realize the GMRES operation from
+BLAS. \emph{Futures}, a mechanism of asynchrony supported by
+ParalleX, are used to expose parallelism in our implementation. We examine
+the performance of this new HPX GMRES code, relative to conventional parallel
+GMRES implementations. 
+
 \end{abstract}
 
 \end{document}
