@@ -23,7 +23,7 @@ set(mkl_include_dir
    )
 
 set(gmres_include_dir
-    "~/Bureau/PHD/Codes C++/Gmres/Gmres Component"
+    "~/Bureau/nt2-lsu/HPX Component Code/Gmres Component"
    )
 
 set(dependencies
