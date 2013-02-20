@@ -51,69 +51,27 @@ Daniel Etiemble\inst{1} }
 \maketitle
 
 \begin{abstract}
-The exponential growth of available FLOPS requires the development of 
-more sophisticated programming tools enabling significantly improved 
-application efficiency and scalability on current and future architectures. 
-We investigate the new execution model ParalleX \cite{ParalleX}, 
-which defines a work queue based, message driven, fine grain parallelization 
-scheme based on a global address space for highly asynchronous calculations. 
-This paper uses HPX\cite{hpx}, a C++ library implementing the 
-ParalleX execution model, to realize the GMRES operation from
-BLAS\cite{GMRES}. \emph{Futures}\cite{futures}, a mechanism of asynchrony supported by
-ParalleX, are used to expose parallelism in our implementation. We examine
-the performance of this new HPX GMRES code, relative to conventional parallel
-GMRES implementations. 
+The exponential growth of available FLOPS requires the development of more sophisticated programming tools enabling significantly improved 
+application efficiency and scalability on current and future architectures. We investigate the new execution model ParalleX \cite{ParalleX}, which defines a work queue based, message driven, fine grain parallelization scheme based on a global address space for highly asynchronous calculations. This paper uses HPX \cite{ParalleX}, a C++ library implementing the ParalleX execution model, to realize the GMRES operation from BLAS \cite{GMRES}. \emph{Futures}, a mechanism of asynchrony \cite{Futures1} \cite{Futures2} supported by ParalleX, are used to expose parallelism in our implementation. We examine the performance of this new HPX GMRES code, relative to conventional parallel GMRES implementations. 
 \end{abstract}
 
 \keywords{C++, Futures, Parallel Programming, High Performance Computing}
 
 \section{Introduction}\label{Introduction}
-High Performance Computing (HPC) is taking a new direction due to challenges
-provided by multicore and large scale systems. Indeed, the announced emergence
-of thousand billion core computers will significantly increases parallelism.
-The aim, therefore, will be no longer to make faster programs but to make
-programs that efficiently scale.\smallskip 
+High Performance Computing (HPC) is taking a new direction due to challenges provided by multicore and large scale systems. Indeed, the announced emergence of thousand billion core computers will significantly increases parallelism. The aim, therefore, will be no longer to make faster programs but to make programs that efficiently scale.\smallskip 
 
-Clusters of multicore processors which are systems commonly used in HPC, use
-two programming models: shared memory model for SMP nodes and message passing
-model for the whole cluster. \fxwarning*{Citation needed}{But using these models, parallel programs tend to
-follow the same programming rule consisting in implementing global barriers.
-ANL (Argonne National Laboratory)} noticed the critical cost of barriers because
-of latencies, system noises and non-uniform workloads especially in massively
-parallel machines.\smallskip 
+Clusters of multicore processors which are systems commonly used in HPC, use two programming models: shared memory model for SMP nodes and message passing model for the whole cluster. But using these models, parallel programs tend to follow the same programming rule consisting in implementing global barriers. ANL (Argonne National Laboratory) noticed the critical cost of barriers because
+of latencies, system noises and non-uniform workloads especially in massively parallel machines. \cite{Barrier}\smallskip 
 
-To solve this problem, the idea is to integrate asynchrony, a concept already
-existing in MPI but still difficult to implement. This paper thus introduces
-new concepts by means of ParalleX model which get away from conventional
-parallel programming models allowing to maximize asynchrony in
-calculations.\smallskip
+To solve this problem, the idea is to integrate asynchrony, a concept already existing in MPI but still difficult to implement. This paper thus introduces new concepts by means of ParalleX model which get away from conventional parallel programming models allowing to maximize asynchrony in calculations.\smallskip
 
-Section \ref{Futures} introduces \emph{Futures} and \emph{Promises} mechanism
-in wider context. Section \ref{HPX} describes the High Performance ParalleX
-(HPX) runtime system \cite{ParalleX}, an experimental implementation of
-ParalleX. Section \ref{GMRES} defines the Generalized Minimal Residual
-algorithm (GMRES) \cite{GMRES} and discusses the results of its HPX
-implementation.
+Section \ref{Futures} introduces \emph{Futures} and \emph{Promises} mechanism in more general context. Section \ref{HPX} describes the High Performance ParalleX (HPX) runtime system \cite{ParalleX}, an experimental implementation of ParalleX. Section \ref{GMRES} defines the Generalized Minimal Residual algorithm (GMRES) \cite{GMRES} and discusses the results of its HPX implementation.
 
 \section{Futures and Promises}\label{Futures}
-Parallel programming models currently provide different ways to protect data
-shared between multiple threads (mutual exclusions, global barrier). But
-sometimes, the requirement is not necessarily to protect data but to simply
-synchronize concurrent operations encapsulated in different threads. One
-example is a thread which needs to wait that another thread finishes its work
-before running itself. To address this demand, object oriented programming
-research have proposed an alternative so called \emph{Futures} and
-\emph{Promises} \cite{Futures1} \cite{Futures2} which fully implements this
-concept.
+Parallel programming models currently provide different ways to protect data shared between multiple threads (mutual exclusions, global barrier). But sometimes, the requirement is not necessarily to protect data but to simply synchronize concurrent operations encapsulated in different threads. One example is a thread which needs to wait that another thread finishes its work before running itself. To address this demand, object oriented programming research have proposed an alternative so called \emph{Futures} and \emph{Promises} \cite{Futures1} \cite{Futures2} which fully implements this concept.
 
 \subsection{Definition}
-In one hand, \emph{Futures} are objects encapsulating a value which will be
-available later. On the other hand, \emph{Promises} are objects intended to
-solve these \emph{Futures} using a function and a number of arguments.
-Programming with Futures is different from classical synchronous programming in
-the fact that tasks run in non-deterministic manner in time. Futures will then
-make it possible for applications to invoke asynchronous method without being
-interrupted. (cf. Figure \ref{thread})
+In one hand, \emph{Futures} are objects encapsulating a value which will be available later. On the other hand, \emph{Promises} are objects intended to solve these \emph{Futures} using a function and some arguments. Programming with Futures is different from classical synchronous programming in the fact that tasks run in non-deterministic manner in time. Futures will then make it possible for applications to invoke asynchronous method without being interrupted. (cf. Figure \ref{thread})
 
 \begin{figure}[h]
 \begin{center}
@@ -149,12 +107,7 @@ With Futures programming, the code is written like:
 \end{lstlisting}
 
 
-In this example (cf. Listing \ref{example_future}), Futures y1 and y2 each
-encapsulate one asynchronous function result. Required results are obtained by
-calling Futures \texttt{get()} method which lead to suspension of consumer
-threads until these results are available. The following timing diagrams
-illustrate the interest of Futures in terms of parallelism: with a syntax close
-to the sequential program, we had written a parallel code.
+In this example (cf. Listing \ref{example_future}), Futures y1 and y2 each encapsulate one asynchronous function result. Required results are obtained by calling Futures \texttt{get()} method which lead to suspension of consumer threads until these results are available. The following timing diagrams illustrate the interest of Futures in terms of parallelism: with a syntax close to the sequential program, we had written a parallel code.
 
 \begin{figure}[h]
       \begin{subfigure}[b]{0.5\textwidth}
@@ -174,21 +127,11 @@ to the sequential program, we had written a parallel code.
 \end{figure}
 
 \subsection{Implementations}
-The various implementations of Futures/Promises model are either directly
-integrated in languages (Alice ML, Scala) or integrated in specific libraries
-(OCaml, Java). A class implementation is also integrated in the last C++
-standard \cite{Futuresc++}. From this point, Stellar group (Systems
-Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for
-Computation and Technology - Louisiana State University) has adapted this model
-in particular for distributed computing and grid computing. This adaptation,
-fully written in C++, consists of a runtime system named HPX (High Performance
-ParalleX). The next section will review the main elements of this system.   
+The various implementations of Futures/Promises model are either directly integrated in languages (Alice ML, Scala) or integrated in specific libraries (OCaml, Java). A class implementation is also integrated in the last C++ standard \cite{Futuresc++}. From this point, Stellar group (Systems Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for Computation and Technology - Louisiana State University) has adapted this model in particular for distributed computing and grid computing. This adaptation,
+fully written in C++, consists of a runtime system named HPX (High Performance ParalleX). The next section will review the main elements of this system.   
 
 \section{HPX Runtime System}\label{HPX}
-HPX runtime system, designed by Stellar group, is an effective implementation
-of ParalleX paradigm that aims to increase performances by considering all
-obstacles encountered by conventional programming models. Thus, ParalleX
-combines several concepts that we will develop below.
+HPX runtime system, designed by Stellar group, is an effective implementation of ParalleX paradigm that aims to increase performances by considering all obstacles encountered by conventional programming models. Thus, ParalleX combines several concepts that we will develop below.
 
 \subsection{General Design}
 
@@ -201,43 +144,15 @@ combines several concepts that we will develop below.
 \end{figure}
 
 \subsubsection{AGAS - The Global Address Space}
-A single dress space will open new perspectives like dynamic load balancing
-and dynamic graph related problems implementation. The PGAS model \cite{PGAS}
-partially solves this problem but don't allow objects to keep their name moving
-from a cluster node to another. Thus, Stellar group proposed a PGAS based model
-so called AGAS (Active Global Address Space) \cite{ParalleX} which assigns
-global names (128 bits integers) to objects. While maintaining no coherence
-between cluster nodes, AGAS dynamically provides the correspondence between
-this global id and a local virtual address (LVA) \cite{ParalleX} which includes
-the node id, the type of the entity and its local memory address. This will
-help inter-node data migration.
+A single adress space will open new perspectives like dynamic load balancing and dynamic graph related problems implementation. The PGAS model \cite{PGAS} partially solves this problem but don't allow objects to keep their name moving from a cluster node to another. Thus, Stellar group proposed a PGAS based model so called AGAS (Active Global Address Space) \cite{ParalleX} which assigns
+global names (128 bits integers) to objects. While maintaining no coherence between cluster nodes, AGAS dynamically provides the correspondence between this global id and a local virtual address (LVA) \cite{ParalleX} which includes the node id, the type of the entity and its local memory address. This will help inter-node data migration.
 
 \subsubsection{Parcels - Message Oriented Programming}
-Message passing is an essential step when we work in a distributed memory. But
-the kind of message may vary with applications. On the one hand, we can move
-the data to the nodes which know in advance the work to accomplish; this is the
-solution of MPI. On the other hand, we can move the work to the nodes which
-already have their data; this is the solution of ParalleX. Thus, ParalleX
-incorporates the notion of \emph{Parcels} \cite{ParalleX} which are active
-messages including the destination address (provided by AGAS), the work to
-accomplish, some needed arguments and control elements for \emph{LCOs} that we
-will describe in section \ref{lcos}. This will enable dynamic resource
+Message passing is an essential step when we work in a distributed memory. But the kind of message may vary with applications. On the one hand, we can move the data to the nodes which know in advance the work to accomplish; this is the solution of MPI. On the other hand, we can move the work to the nodes which already have their data; this is the solution of ParalleX. Thus, ParalleX incorporates the notion of \emph{Parcels} \cite{ParalleX} which are active messages including the destination address (provided by AGAS), the work to accomplish, some needed arguments and control elements for \emph{LCOs} that we will describe in section \ref{lcos}. This will enable dynamic resource
 management and the use of distributed control flows.
 
 \subsubsection{PX-threads - User Level Threads}
-Thread migration between nodes is theoretically feasible but is still a costly
-operation in particular in heterogeneous parallel architectures. The preferred
-solution in ParalleX is to simply send requesting Parcels leading to the
-creation of a continuation thread in a certain locality. These continuation
-threads so called \emph{PX-threads} \cite{ParalleX} are user level threads,
-scheduled non-preemptively by a local thread manager (one per node) which knows
-in advance the corresponding node topology. This thread manager provides a
-PX-threads queue to each \emph{OS-thread} \cite{ParalleX} following the
-\enquote{first come first served} scheduling rule. Note that in conventional
-systems, an OS-thread is physically assigned to a processor core. Like a
-classical thread, a PX-thread may be in four different states which are:
-\emph{pending}, \emph{running}, \emph{suspended} and \emph{terminated}. The
-state of the PX-threads is controlled by the LCOs that we will describe below.
+Thread migration between nodes is theoretically feasible but is still a costly operation in particular in heterogeneous parallel architectures. The preferred solution in ParalleX is to simply send requesting Parcels leading to the creation of a continuation thread in a certain locality. These continuation threads so called \emph{PX-threads} \cite{ParalleX} are user level threads, scheduled non-preemptively by a local thread manager (one per node) which knows in advance the corresponding node topology. This thread manager provides a PX-threads queue to each \emph{OS-thread} \cite{ParalleX} following the \enquote{first come first served} scheduling rule. Note that in conventional systems, an OS-thread is physically assigned to a processor core. Like a classical thread, a PX-thread may be in four different states which are: \emph{pending}, \emph{running}, \emph{suspended} and \emph{terminated}. The state of the PX-threads is controlled by the LCOs that we will describe below.
 
 \subsubsection{LCOs - Thread Synchronisation Mechanism}\label{lcos}
 
@@ -249,37 +164,16 @@ state of the PX-threads is controlled by the LCOs that we will describe below.
 \label{hpxthread}
 \end{figure}
 
-As we have seen in Section \ref{Introduction}, global barriers have become
-problematic. Thus, ParalleX integrates a lightweight thread synchronisation
-mechanism in the form of \emph{LCOs} (Local Control Objects) \cite{ParalleX}.
-The LCOs are a class of objects which may locally create or reactivate (in a
-node) a PX-thread as a result of one or more events (ex: receipt of a Parcel).
-The LCOs may take several forms: \emph{semaphores}, \emph{mutexes},
-\emph{Futures}. The Futures semantics described in section \ref{Futures} will
-thus enable event-driven thread creation, on-the-fly scheduling and effectively
-exploit the implicit parallelism of directed graph problems. Figure
-\ref{hpxthread} illustrates the use of Futures in the HPX system.
+As we have seen in Section \ref{Introduction}, global barriers have become problematic. Thus, ParalleX integrates a lightweight thread synchronisation
+mechanism in the form of \emph{LCOs} (Local Control Objects) \cite{ParalleX}. The LCOs are a class of objects which may locally create or reactivate (in a node) a PX-thread as a result of one or more events (ex: receipt of a Parcel). The LCOs may take several forms: \emph{semaphores}, \emph{mutexes}, \emph{Futures}. The Futures semantics described in section \ref{Futures} will thus enable event-driven thread creation, on-the-fly scheduling and effectively exploit the implicit parallelism of directed graph problems. Figure \ref{hpxthread} illustrates the use of Futures in the HPX system.
 
 \section{GMRES Algorithm}\label{GMRES}
-In the HPC field, linear systems resolution is increasingly done by iterative
-methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the
-advantage to provide a high level of parallelism: hence the idea to make an HPX
-implementation of GMRES algorithm. The GMRES method (Generalized Minimal
-Residual) \cite{GMRES} is an algorithm resolving the linear system below:
-\begin{center}
-  $Ax=b$
-\end{center}
-where A is an invertible square matrix, calculating the $x^{(k)}$ value which
-minimizes the Euclidian norm of the residual in each iteration. This method
-allows to find theoretically the $x$ solution with a finite number of iterations.
+In the HPC field, linear systems resolution is increasingly done by iterative methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the advantage to provide high levels of parallelism in particular for large sparse systems: hence the idea to make an implementation of GMRES algorithm into HPX system. The GMRES method (Generalized Minimal Residual) \cite{GMRES} is an iterative algorithm solving the linear system $Ax=b$, where A is an invertible square matrix, from an initial guess $x_{0}$.
+
+At each iteration, this method calculates $x_{k} \in K_{k}$ where $K_{k}$ is a $k$-dimensional Krylov subspace, minimizing the Euclidian norm of the residual. But the amount of calculations and storage work increases whith the iteration. Thus, the algorithm is usually restarted every $m$ iterations using current approximate solution as initial guess before each restart step. ( GMRES(m) ) \cite{GMRES}
 
 \subsection{The Gram-Shmidt Orthogonalization}
-To reach this solution, we have to construct the orthonormal vectors which will
-constitute a Krylov space basis (Gram-Shmidt Orthogonalization) and then to
-perform several rotations to get a trivial system (upper triangular system).
-The main problem of GMRES is in the orthonormalization step. Indeed, the
-construction of each vector requires to realize two global communications: one
-during the orthogonalization step and the other during the normalization step.
+To reach this solution, we need to construct orthonormal vectors which constitute a Krylov space basis (Gram-Shmidt Orthogonalization) and then to perform several rotations to get a trivial system (upper triangular system). The main problem of GMRES is in the orthonormalization step. Indeed, the construction of each vector requires to realize two global communications: one during the orthogonalization step and the other during the normalization step.
 
 \begin{algorithm}
 \caption{GMRES Algorithm}
@@ -297,42 +191,23 @@ $v_0 \gets r_0/\|r_0\|_2$\\
   $x \gets x_0 + V_my_m$
 \end{algorithm}
 
-A first solution, that we won't deal with in this paper, is to minimize the
-inter-processes communications by adding redundancy in calculations. This
-approach so called \enquote{communication-avoiding} \cite{CAGMRES} results to
-the CA-GMRES version of the algorithm. A second solution is to change the
-synchronization model in order to reduce the communication overhead; this is
-the solution that we will examine below.
+A first solution, that we won't deal with in this paper, is to minimize the inter-processes communications by adding redundancy in calculations. This approach so called \enquote{communication-avoiding} \cite{CAGMRES} results to the CA-GMRES version of the algorithm. A second solution is to change the synchronization model in order to reduce the communication overhead; this is the solution that we will examine below.
 
 \subsection{Implementation with Futures}
-In this study, we started from the original algorithm \cite{GMRES} developed by
-Y. Saad and M.H. Shultz. In each iteration of the algorithm, three kinds of
-operations are performed: matrix-vector product, dot product and vector
-addition. The most naive way to parallelize these various operations is to
-slice matrices and vectors and to attribute each pieces to a process (cf.
-Figure \ref{pargmres}). With HPX, the idea is to invoke several Futures in each
-iteration so that to perform an asynchronous calculation by domain. The second
-step including Givens rotations is mostly sequential and spend lower time than
-orthonormalization step. Then, we didn't take care of its optimization knowing
-its little influence on the performances.
+In this study, we started from the original algorithm \cite{GMRES} developed by Y. Saad and M.H. Shultz. In each iteration, four kinds of operations are performed: sparse matrix-vector product, dot product, vector addition and vector scale. The most naive way to parallelize these various operations is to slice matrices and vectors and to attribute each pieces to a process (cf. Figure \ref{pargmres}). With HPX, the idea is to invoke several Futures in each iteration so that to perform an asynchronous calculation by domain. The second step including Givens rotations is mostly sequential and spend lower time than orthonormalization step. Then, we didn't take care of its optimization knowing its little influence on the performances.
 
 \begin{figure}[h]
 \begin{center}
-\includegraphics[scale=0.33]{Images/Im6.png}
+\includegraphics[scale=0.5]{Images/Im6.png}
 \end{center}
 \caption{Classical parallelization of GMRES}
 \label{pargmres}
 \end{figure}
 
-\subsection{Performances evaluation}
-This Section confronts the performances of the HPX GMRES implementation with
-the one used in PETSC \cite{Petsc}. Recognized as a reference in HPC field,
-PETSC performs its parallel calculations using MPI.
+\subsection{Experimental results}
+This Section confronts the performances of HPX GMRES implementation with the one provided by PETSC \cite{Petsc}. Recognized as a reference in HPC field, PETSC performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter and the maximum iteration respectively to 30 and 1000. The used machine was a 2*6 core NUMA node. At this time, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for GMRES when it uses BLAS interface. We will see below the impact on the performances.  
 
-\subsubsection{Karp-Flatt Metric}
-To make a quantitative evaluation of performances, we used the Karp-Flatt
-metric: a parallelism measuring instrument developed from Amdahl's law and
-giving more informations about parallelism cost. The Karp-Flatt formula is:
+To make a quantitative evaluation of performances, we used the Karp-Flatt metric: a parallelism measuring instrument developed from Amdahl's law and giving more informations about parallelism cost. The Karp-Flatt formula is:
 
 \begin{eqnarray}
 \alpha(p) &=&\frac{1/\gamma(p) - 1/p}{1-1/p} \label{KarpFlatt}
@@ -341,14 +216,44 @@ with\\
 $\gamma$: Speedup of parallelism\\
 $p$: Number of processors (or cores)\\
 
-The major interest of this metric is to be representative of the evolution of
-parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency
-of an algorithm is due to parallelism cost. If not, this is due to sequential
-part of the algorithm.
+The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.31]{Images/add20.png}
+\end{center}
+\caption{Performance measures of add20}
+\label{add20}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.31]{Images/orsirr1.png}
+\end{center}
+\caption{Performance measures of orsirr\_1}
+\label{orsirr_1}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.31]{Images/orsreg1.png}
+\end{center}
+\caption{Performance measures of orsreg\_1}
+\label{orsreg_1}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.31]{Images/pde900.png}
+\end{center}
+\caption{Performance measures of pde900}
+\label{pde900}
+\end{figure}
+
 
 \section{Conclusion}
 
 \bibliographystyle{abbrv}
-\bibliography{biblio}
+\bibliography{main}
 
 \end{document}
