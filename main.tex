@@ -127,8 +127,7 @@ In this example (cf. Listing \ref{example_future}), Futures y1 and y2 each encap
 \end{figure}
 
 \subsection{Implementations}
-The various implementations of Futures/Promises model are either directly integrated in languages (Alice ML, Scala) or integrated in specific libraries (OCaml, Java). A class implementation is also integrated in the last C++ standard \cite{Futuresc++}. From this point, Stellar group (Systems Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for Computation and Technology - Louisiana State University) has adapted this model in particular for distributed computing and grid computing. This adaptation,
-fully written in C++, consists of a runtime system named HPX (High Performance ParalleX). The next section will review the main elements of this system.   
+The various implementations of Futures/Promises model are either directly integrated in languages (Alice ML, Scala) or integrated in specific libraries (OCaml, Java). A class implementation is also integrated in the last C++ standard \cite{Futuresc++}. From this point, Stellar group (Systems Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for Computation and Technology - Louisiana State University) has adapted this model in particular for distributed computing and grid computing. This adaptation, fully written in C++, consists of a runtime system named HPX (High Performance ParalleX). The next section will review the main elements of this system.   
 
 \section{HPX Runtime System}\label{HPX}
 HPX runtime system, designed by Stellar group, is an effective implementation of ParalleX paradigm that aims to increase performances by considering all obstacles encountered by conventional programming models. Thus, ParalleX combines several concepts that we will develop below.
@@ -168,7 +167,7 @@ As we have seen in Section \ref{Introduction}, global barriers have become probl
 mechanism in the form of \emph{LCOs} (Local Control Objects) \cite{ParalleX}. The LCOs are a class of objects which may locally create or reactivate (in a node) a PX-thread as a result of one or more events (ex: receipt of a Parcel). The LCOs may take several forms: \emph{semaphores}, \emph{mutexes}, \emph{Futures}. The Futures semantics described in section \ref{Futures} will thus enable event-driven thread creation, on-the-fly scheduling and effectively exploit the implicit parallelism of directed graph problems. Figure \ref{hpxthread} illustrates the use of Futures in the HPX system.
 
 \section{GMRES Algorithm}\label{GMRES}
-In the HPC field, linear systems resolution is increasingly done by iterative methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the advantage to provide high levels of parallelism in particular for large sparse systems: hence the idea to make an implementation of GMRES algorithm into HPX system. The GMRES method (Generalized Minimal Residual) \cite{GMRES} is an iterative algorithm solving the linear system $Ax=b$, where A is an invertible square matrix, from an initial guess $x_{0}$.
+In the HPC field, linear systems resolution is increasingly done by iterative methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the advantage to provide high levels of parallelism in particular for large sparse systems: hence the idea to make an implementation of GMRES algorithm into HPX system. The GMRES method (Generalized Minimal Residual) \cite{GMRES} is an iterative algorithm solving the linear system $Ax=b$, where A is an invertible square matrix, from an initial guess $x_{0}$.\smallskip
 
 At each iteration, this method calculates $x_{k} \in K_{k}$ where $K_{k}$ is a $k$-dimensional Krylov subspace, minimizing the Euclidian norm of the residual. But the amount of calculations and storage work increases whith the iteration. Thus, the algorithm is usually restarted every $m$ iterations using current approximate solution as initial guess before each restart step. ( GMRES(m) ) \cite{GMRES}
 
@@ -205,7 +204,7 @@ In this study, we started from the original algorithm \cite{GMRES} developed by 
 \end{figure}
 
 \subsection{Experimental results}
-This Section confronts the performances of HPX GMRES implementation with the one provided by PETSC \cite{Petsc}. Recognized as a reference in HPC field, PETSC performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter and the maximum iteration respectively to 30 and 1000. The used machine was a 2*6 core NUMA node. At this time, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for GMRES when it uses BLAS interface. We will see below the impact on the performances.  
+This Section confronts the performances of HPX GMRES implementation with the one provided by PETSC \cite{Petsc}. Recognized as a reference in HPC field, PETSC performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter to 30 to keep reasonable storage (Krylov basis vectors) and the maximum number of iterations to 1000, just enough for problems at hand. The used machine was a 2*6 core NUMA node. At this time, despite the popularity of this architecture and existing tools to manage it, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for GMRES when it uses BLAS interface. We will see below the impact on the performances.\smallskip  
 
 To make a quantitative evaluation of performances, we used the Karp-Flatt metric: a parallelism measuring instrument developed from Amdahl's law and giving more informations about parallelism cost. The Karp-Flatt formula is:
 
@@ -216,42 +215,57 @@ with\\
 $\gamma$: Speedup of parallelism\\
 $p$: Number of processors (or cores)\\
 
-The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.
+The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.\smallskip
 
-\begin{figure}[h]
+Globally, HPX and Petsc codes scale relatively well while used cores are located in the same NUMA domain (from 1 to 6 cores). But when we use more cores (from 7 to 12), performances degrade because of inter-domain data exchange. We can notice that this degradation is worst for HPX because all data are located in the same NUMA domain. The distributed nature of Petsc code in which every core owns their data makes its scalability less impaired. From here, we'll restrict our focus on one NUMA domain (from 1 to 6 threads).\smallskip   
+
+Figures \ref{add20} and \ref{orsreg_1} show performances for less sparse systems. In this case, each thread owns sufficient data to confer some scalability. Although execution times are equivalent, Karp-Flatt measuring show clearly that communication overhead has a more negative impact in HPX than in Petsc. Looking beyond the code structure, classical GMRES is largely synchronous and so it remains difficult to gain performance with asynchronism.\smallskip
+
+Figure  \ref{pde900} show performances for very sparse systems. The sequential time is therefore smaller than others and so the overhead treshold appears clearly seeing HPX results. Here, the SpMV step scales less because of overlap of calculation by communications (starting from 4 threads). This overhead treshold is approximatively $25*10^{6}$ cycles with $2.4$ Ghz frequency.
+
+\begin{figure}[h!]
 \begin{center}
-\includegraphics[scale=0.31]{Images/add20.png}
+\includegraphics[scale=0.25]{Images/add20.png}
 \end{center}
-\caption{Performance measures of add20}
+\caption{Performance measures of add20 ($2395\times2395$, 17319 entries)}
 \label{add20}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \begin{center}
-\includegraphics[scale=0.31]{Images/orsirr1.png}
+\includegraphics[scale=0.25]{Images/orsreg1.png}
 \end{center}
-\caption{Performance measures of orsirr\_1}
-\label{orsirr_1}
-\end{figure}
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[scale=0.31]{Images/orsreg1.png}
-\end{center}
-\caption{Performance measures of orsreg\_1}
+\caption{Performance measures of orsreg$_1$ ($2205\times2205$, 14133 entries)}
 \label{orsreg_1}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \begin{center}
-\includegraphics[scale=0.31]{Images/pde900.png}
+\includegraphics[scale=0.25]{Images/orsirr1.png}
 \end{center}
-\caption{Performance measures of pde900}
+\caption{Performance measures of orsirr$_1$ ($1030\times1030$, 6858 entries)}
+\label{orsirr_1}
+\end{figure}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.25]{Images/sherman1.png}
+\end{center}
+\caption{Performance measures of sherman$_1$ ($1000\times1000$, 3750 entries)}
+\label{sherman1}
+\end{figure}
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[scale=0.25]{Images/pde900.png}
+\end{center}
+\caption{Performance measures of pde900 ($900\times900$, 4390 entries)}
 \label{pde900}
 \end{figure}
 
 
 \section{Conclusion}
+Other versions of the algorithm exist like Pipelined GMRES (p(l)-GMRES) \cite{Parall_GMRES} in which some of calculation steps are interlaced with each other so that to hide global communications. This version integrating more asynchronous calculations could be investigated with HPX and compared to the actual Petsc implementation.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
