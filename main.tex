@@ -1,6 +1,9 @@
-% EUROPAR PAPER
+% HLPP PAPER
 
-\documentclass{llncs}
+\documentclass[smallextended]{svjour3}
+
+\usepackage{graphicx}
+
 \usepackage{array}
 \usepackage{multirow}
 
@@ -10,11 +13,10 @@
 \usepackage{color}
 \usepackage{tikz}
 \usepackage{url}
+\usepackage{subfig}
 
 \usepackage{fixme}
 \fxsetup{status=draft,theme=color}
-
-\usepackage{graphicx}
 
 \usepackage{caption}
 \usepackage{subcaption}
@@ -40,19 +42,21 @@
 		, columns		= flexible
 	}
 
+\journalname{Name}
+	
 \begin{document}
 
-\title{Parallel GMRES with Futures and Promises}
+\title{Parallel Gmres with Futures and Promises}
 
-\author{Antoine Tran Tan\inst{1} \and Bryce Adelstein-Lelbach\inst{2} \and Joel Falcou\inst{1} \and Hartmut Kaiser\inst{2} \and
-Daniel Etiemble\inst{1} }
+\author{A. Tran Tan \and B. Adelstein-Lelbach \and \newline J. Falcou \and H. Kaiser \and D. Etiemble }
 \institute{LRI, Universit\'e Paris-Sud XI - Orsay, France \and CCT, Louisiana State University - Baton Rouge, USA}
+\date{Received: date / Accepted: date}
 
 \maketitle
 
 \begin{abstract}
 The exponential growth of available FLOPS requires the development of more sophisticated programming tools enabling significantly improved 
-application efficiency and scalability on current and future architectures. We investigate the new execution model ParalleX \cite{ParalleX}, which defines a work queue based, message driven, fine grain parallelization scheme based on a global address space for highly asynchronous calculations. This paper uses HPX \cite{ParalleX}, a C++ library implementing the ParalleX execution model, to realize the GMRES operation from BLAS \cite{GMRES}. \emph{Futures}, a mechanism of asynchrony \cite{Futures1} \cite{Futures2} supported by ParalleX, are used to expose parallelism in our implementation. We examine the performance of this new HPX GMRES code, relative to conventional parallel GMRES implementations. 
+application efficiency and scalability on current and future architectures. We investigate the new execution model ParalleX \cite{ParalleX}, which defines a work queue based, message driven, fine grain parallelization scheme based on a global address space for highly asynchronous calculations. This paper uses HPX \cite{ParalleX}, a C++ library implementing the ParalleX execution model, to realize the Gmres operation from BLAS \cite{GMRES}. \emph{Futures}, a mechanism of asynchrony \cite{Futures1} \cite{Futures2} supported by ParalleX, are used to expose parallelism in our implementation. We examine the performance of this new HPX Gmres code, relative to conventional parallel Gmres implementations. 
 \end{abstract}
 
 \keywords{C++, Futures, Parallel Programming, High Performance Computing}
@@ -65,13 +69,10 @@ of latencies, system noises and non-uniform workloads especially in massively pa
 
 To solve this problem, the idea is to integrate asynchrony, a concept already existing in MPI but still difficult to implement. This paper thus introduces new concepts by means of ParalleX model which get away from conventional parallel programming models allowing to maximize asynchrony in calculations.\smallskip
 
-Section \ref{Futures} introduces \emph{Futures} and \emph{Promises} mechanism in more general context. Section \ref{HPX} describes the High Performance ParalleX (HPX) runtime system \cite{ParalleX}, an experimental implementation of ParalleX. Section \ref{GMRES} defines the Generalized Minimal Residual algorithm (GMRES) \cite{GMRES} and discusses the results of its HPX implementation.
+Section \ref{Futures} introduces \emph{Futures} and \emph{Promises} mechanism in more general context. Section \ref{HPX} describes the High Performance ParalleX (HPX) runtime system \cite{ParalleX}, an experimental implementation of ParalleX. Section \ref{Gmres} defines the Generalized Minimal Residual algorithm (Gmres) \cite{GMRES} and discusses the results of its HPX implementation.
 
 \section{Futures and Promises}\label{Futures}
 Parallel programming models currently provide different ways to protect data shared between multiple threads (mutual exclusions, global barrier). But sometimes, the requirement is not necessarily to protect data but to simply synchronize concurrent operations encapsulated in different threads. One example is a thread which needs to wait that another thread finishes its work before running itself. To address this demand, object oriented programming research have proposed an alternative so called \emph{Futures} and \emph{Promises} \cite{Futures1} \cite{Futures2} which fully implements this concept.
-
-\subsection{Definition}
-In one hand, \emph{Futures} are objects encapsulating a value which will be available later. On the other hand, \emph{Promises} are objects intended to solve these \emph{Futures} using a function and some arguments. Programming with Futures is different from classical synchronous programming in the fact that tasks run in non-deterministic manner in time. Futures will then make it possible for applications to invoke asynchronous method without being interrupted. (cf. Figure \ref{thread})
 
 \begin{figure}[h]
 \begin{center}
@@ -80,6 +81,9 @@ In one hand, \emph{Futures} are objects encapsulating a value which will be avai
 \caption{Behavioural pattern of Futures and Promises}
 \label{thread}
 \end{figure}
+
+\subsection{Definition}
+In one hand, \emph{Futures} are objects encapsulating a value which will be available later. On the other hand, \emph{Promises} are objects intended to solve these \emph{Futures} using a function and some arguments. Programming with Futures is different from classical synchronous programming in the fact that tasks run in non-deterministic manner in time. Futures will then make it possible for applications to invoke asynchronous method without being interrupted. (cf. Figure \ref{thread})
 
 \subsection{Example}
 Here we illustrate the mechanism of Futures with an example. Suppose we want to
@@ -109,25 +113,40 @@ With Futures programming, the code is written like:
 
 In this example (cf. Listing \ref{example_future}), Futures y1 and y2 each encapsulate one asynchronous function result. Required results are obtained by calling Futures \texttt{get()} method which lead to suspension of consumer threads until these results are available. The following timing diagrams illustrate the interest of Futures in terms of parallelism: with a syntax close to the sequential program, we had written a parallel code.
 
-\begin{figure}[h]
-      \begin{subfigure}[b]{0.5\textwidth}
-	      \centering
-	      \includegraphics[scale=0.4]{Images/Im2.png}
-	      \caption{Sequential program}
-	      
-      \end{subfigure}
-      \begin{subfigure}[b]{0.5\textwidth}
-	      \centering
-	      \includegraphics[scale=0.4]{Images/Im3.png}
-	      \caption{Program with Futures}
-      \end{subfigure}\\
-      
-      \caption{Timing diagrams of example code}
-      \label{chronofuture}
-\end{figure}
-
 \subsection{Implementations}
 The various implementations of Futures/Promises model are either directly integrated in languages (Alice ML, Scala) or integrated in specific libraries (OCaml, Java). A class implementation is also integrated in the last C++ standard \cite{Futuresc++}. From this point, Stellar group (Systems Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for Computation and Technology - Louisiana State University) has adapted this model in particular for distributed computing and grid computing. This adaptation, fully written in C++, consists of a runtime system named HPX (High Performance ParalleX). The next section will review the main elements of this system.   
+
+% \begin{figure}[h]
+%       \begin{subfigure}[b]{0.5\textwidth}
+% 	      \centering
+% 	      \includegraphics[scale=0.4]{Images/Im2.png}
+% 	      \caption{Sequential program}
+% 	      
+%       \end{subfigure}
+%       \begin{subfigure}[b]{0.5\textwidth}
+% 	      \centering
+% 	      \includegraphics[scale=0.4]{Images/Im3.png}
+% 	      \caption{Program with Futures}
+%       \end{subfigure}\\
+%       
+%       \caption{Timing diagrams of example code}
+%       \label{chronofuture}
+% \end{figure}
+
+\begin{figure}[h]
+	\centering
+	\subfloat[Sequential program]
+	{
+		\includegraphics[scale=0.35]{Images/Im2.png}
+	}
+	\hspace{0.5cm}
+	\subfloat[Program with Futures]
+	{
+		\includegraphics[scale=0.35]{Images/Im3.png}
+	}	
+	\caption{Timing diagrams of example code}
+	\label{chronofuture}
+\end{figure}
 
 \section{HPX Runtime System}\label{HPX}
 HPX runtime system, designed by Stellar group, is an effective implementation of ParalleX paradigm that aims to increase performances by considering all obstacles encountered by conventional programming models. Thus, ParalleX combines several concepts that we will develop below.
@@ -166,16 +185,16 @@ Thread migration between nodes is theoretically feasible but is still a costly o
 As we have seen in Section \ref{Introduction}, global barriers have become problematic. Thus, ParalleX integrates a lightweight thread synchronisation
 mechanism in the form of \emph{LCOs} (Local Control Objects) \cite{ParalleX}. The LCOs are a class of objects which may locally create or reactivate (in a node) a PX-thread as a result of one or more events (ex: receipt of a Parcel). The LCOs may take several forms: \emph{semaphores}, \emph{mutexes}, \emph{Futures}. The Futures semantics described in section \ref{Futures} will thus enable event-driven thread creation, on-the-fly scheduling and effectively exploit the implicit parallelism of directed graph problems. Figure \ref{hpxthread} illustrates the use of Futures in the HPX system.
 
-\section{GMRES Algorithm}\label{GMRES}
-In the HPC field, linear systems resolution is increasingly done by iterative methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the advantage to provide high levels of parallelism in particular for large sparse systems: hence the idea to make an implementation of GMRES algorithm into HPX system. The GMRES method (Generalized Minimal Residual) \cite{GMRES} is an iterative algorithm solving the linear system $Ax=b$, where A is an invertible square matrix, from an initial guess $x_{0}$.\smallskip
+\section{Gmres Algorithm}\label{Gmres}
+In the HPC field, linear systems resolution is increasingly done by iterative methods \cite{Methodes} (Jacobi, Gauss-Seidel, ...). These have indeed the advantage to provide high levels of parallelism in particular for large sparse systems: hence the idea to make an implementation of Gmres algorithm into HPX system. The Gmres method (Generalized Minimal Residual) \cite{GMRES} is an iterative algorithm solving the linear system $Ax=b$, where A is an invertible square matrix, from an initial guess $x_{0}$.\smallskip
 
-At each iteration, this method calculates $x_{k} \in K_{k}$ where $K_{k}$ is a $k$-dimensional Krylov subspace, minimizing the Euclidian norm of the residual. But the amount of calculations and storage work increases whith the iteration. Thus, the algorithm is usually restarted every $m$ iterations using current approximate solution as initial guess before each restart step. ( GMRES(m) ) \cite{GMRES}
+At each iteration, this method calculates $x_{k} \in K_{k}$ where $K_{k}$ is a $k$-dimensional Krylov subspace, minimizing the Euclidian norm of the residual. But the amount of calculations and storage work increases whith the iteration. Thus, the algorithm is usually restarted every $m$ iterations using current approximate solution as initial guess before each restart step. ( Gmres(m) ) \cite{GMRES}
 
 \subsection{The Gram-Shmidt Orthogonalization}
-To reach this solution, we need to construct orthonormal vectors which constitute a Krylov space basis (Gram-Shmidt Orthogonalization) and then to perform several rotations to get a trivial system (upper triangular system). The main problem of GMRES is in the orthonormalization step. Indeed, the construction of each vector requires to realize two global communications: one during the orthogonalization step and the other during the normalization step.
+To reach this solution, we need to construct orthonormal vectors which constitute a Krylov space basis (Gram-Shmidt Orthogonalization) and then to perform several rotations to get a trivial system (upper triangular system). The main problem of Gmres is in the orthonormalization step. Indeed, the construction of each vector requires to realize two global communications: one during the orthogonalization step and the other during the normalization step.
 
 \begin{algorithm}
-\caption{GMRES Algorithm}
+\caption{Gmres Algorithm}
 $r_0 \gets b-Ax_0$\\  
 $v_0 \gets r_0/\|r_0\|_2$\\ 
 \For{$i\leftarrow 0$ \KwTo $m-1$}{
@@ -190,7 +209,7 @@ $v_0 \gets r_0/\|r_0\|_2$\\
   $x \gets x_0 + V_my_m$
 \end{algorithm}
 
-A first solution, that we won't deal with in this paper, is to minimize the inter-processes communications by adding redundancy in calculations. This approach so called \enquote{communication-avoiding} \cite{CAGMRES} results to the CA-GMRES version of the algorithm. A second solution is to change the synchronization model in order to reduce the communication overhead; this is the solution that we will examine below.
+A first solution, that we won't deal with in this paper, is to minimize the inter-processes communications by adding redundancy in calculations. This approach so called \enquote{communication-avoiding} \cite{CAGmres} results to the CA-Gmres version of the algorithm. A second solution is to change the synchronization model in order to reduce the communication overhead; this is the solution that we will examine below.
 
 \subsection{Implementation with Futures}
 In this study, we started from the original algorithm \cite{GMRES} developed by Y. Saad and M.H. Shultz. In each iteration, four kinds of operations are performed: sparse matrix-vector product, dot product, vector addition and vector scale. The most naive way to parallelize these various operations is to slice matrices and vectors and to attribute each pieces to a process (cf. Figure \ref{pargmres}). With HPX, the idea is to invoke several Futures in each iteration so that to perform an asynchronous calculation by domain. The second step including Givens rotations is mostly sequential and spend lower time than orthonormalization step. Then, we didn't take care of its optimization knowing its little influence on the performances.
@@ -199,12 +218,12 @@ In this study, we started from the original algorithm \cite{GMRES} developed by 
 \begin{center}
 \includegraphics[scale=0.5]{Images/Im6.png}
 \end{center}
-\caption{Classical parallelization of GMRES}
+\caption{Classical parallelization of Gmres}
 \label{pargmres}
 \end{figure}
 
 \subsection{Experimental results}
-This Section confronts the performances of HPX GMRES implementation with the one provided by PETSC \cite{Petsc}. Recognized as a reference in HPC field, PETSC performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter to 30 to keep reasonable storage (Krylov basis vectors) and the maximum number of iterations to 1000, just enough for problems at hand. The used machine was a 2*6 core NUMA node. At this time, despite the popularity of this architecture and existing tools to manage it, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for GMRES when it uses BLAS interface. We will see below the impact on the performances.\smallskip  
+This Section confronts the performances of HPX Gmres implementation with the one provided by Petsc \cite{Petsc}. Recognized as a reference in HPC field, Petsc performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter to 30 to keep reasonable storage (Krylov basis vectors) and the maximum number of iterations to 1000, just enough for problems at hand. The used machine was a 2*6 core NUMA node. At this time, despite the popularity of this architecture and existing tools to manage it, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for Gmres when it uses BLAS interface. We will see below the impact on the performances.\smallskip  
 
 To make a quantitative evaluation of performances, we used the Karp-Flatt metric: a parallelism measuring instrument developed from Amdahl's law and giving more informations about parallelism cost. The Karp-Flatt formula is:
 
@@ -215,13 +234,46 @@ with\\
 $\gamma$: Speedup of parallelism\\
 $p$: Number of processors (or cores)\\
 
+\begin{figure}[h!]
+	\centering
+	\subfloat[\centering add20\newline$2395\times2395$]
+	{
+		\includegraphics[scale=0.24]{Images/add20m.png}
+	}
+	\hspace{1cm}
+	\subfloat[\centering orsreg1\newline$2205\times2205$]
+	{
+		\includegraphics[scale=0.24]{Images/orsreg1m.png}
+	}
+	\hspace{1cm}
+	\subfloat[pde900\newline$900\times900$]
+	{
+		\includegraphics[scale=0.24]{Images/pde900m.png}
+	}\\
+	\subfloat[\centering orsirr1\newline$1030\times1030$]
+	{
+		\includegraphics[scale=0.24]{Images/orsirr1m.png}
+	}
+	\hspace{1cm}
+	\subfloat[\centering sherman1\newline$1000\times1000$]
+	{
+		\includegraphics[scale=0.24]{Images/sherman1m.png}
+	}
+	\caption{Structure of example matrices}
+	\label{matrices}
+\end{figure}
+
 The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.\smallskip
 
-Globally, HPX and Petsc codes scale relatively well while used cores are located in the same NUMA domain (from 1 to 6 cores). But when we use more cores (from 7 to 12), performances degrade because of inter-domain data exchange. We can notice that this degradation is worst for HPX because all data are located in the same NUMA domain. The distributed nature of Petsc code in which every core owns their data makes its scalability less impaired. From here, we'll restrict our focus on one NUMA domain (from 1 to 6 threads).\smallskip   
+Globally, HPX and Petsc codes scale relatively well while used cores are located in the same NUMA domain (from 1 to 6 cores). But when we use more cores (from 7 to 12), performances degrade because of inter-domain data exchange. We can notice that this degradation is worst for HPX because all data are located in the same NUMA domain. The distributed nature of Petsc code in which every core owns their data makes its scalability less impaired. From here, we'll restrict our focus on one NUMA domain (from 1 to 6 threads).\smallskip
 
-Figures \ref{add20} and \ref{orsreg_1} show performances for less sparse systems. In this case, each thread owns sufficient data to confer some scalability. Although execution times are equivalent, Karp-Flatt measuring show clearly that communication overhead has a more negative impact in HPX than in Petsc. Looking beyond the code structure, classical GMRES is largely synchronous and so it remains difficult to gain performance with asynchronism.\smallskip
+Structure of matrices (cf. Figure \ref{matrices}), in terms of non-zero values repartition, has a significant influence in performances particularly in SpMv step because more the values are far from the diagonal more Petsc can exploit the quasi-diagonal structure of matrices whereas HPX code simply uses the same tiling operation by line using BLAS SpMv. Then, we must take account the standard deviation of each problem.\smallskip     
 
-Figure  \ref{pde900} show performances for very sparse systems. The sequential time is therefore smaller than others and so the overhead treshold appears clearly seeing HPX results. Here, the SpMV step scales less because of overlap of calculation by communications (starting from 4 threads). This overhead treshold is approximatively $25*10^{6}$ cycles with $2.4$ Ghz frequency.
+Figures \ref{add20} and \ref{orsreg_1} show performances for less sparse systems. In this case, each thread owns sufficient data to confer some scalability. Although execution times are equivalent, Karp-Flatt measuring show clearly that communication overhead has a more negative impact in HPX than in Petsc. Looking beyond the code structure, classical Gmres is largely synchronous and so it remains difficult to gain performance with asynchronism.\smallskip
+
+Figures \ref{orsirr_1} and \ref{sherman1} show performances for quasi-tridiagonal systems. In this case, Petsc optimize the sparse matrix location using lower storage than usual CSR format. Then, Petsc sequential code is faster than HPX one but scalability remains equivalent.\smallskip
+
+Figure \ref{pde900} show performances for very sparse systems. The overhead treshold appears clearly seeing HPX results. Here, the SpMV step scales less because of overlap of calculation by communications (starting from 4 threads). This overhead treshold is approximatively $25*10^{6}$ cycles with $2.4$ Ghz frequency.
 
 \begin{figure}[h!]
 \begin{center}
@@ -263,9 +315,10 @@ Figure  \ref{pde900} show performances for very sparse systems. The sequential t
 \label{pde900}
 \end{figure}
 
+\newpage
 
 \section{Conclusion}
-Other versions of the algorithm exist like Pipelined GMRES (p(l)-GMRES) \cite{Parall_GMRES} in which some of calculation steps are interlaced with each other so that to hide global communications. This version integrating more asynchronous calculations could be investigated with HPX and compared to the actual Petsc implementation.
+In this paper, we exposed the main concept of \emph{Futures} and \emph{Promises} in order to improve the expression of asynchronous calculations in parallel applications. By using Parallex model and its corresponding implementation, we compared performance of our Gmres implementation to Petsc one in NUMA architecture. Results show equivalent scalability for the two implementations while used cores are located in the same NUMA domain. Performances can be improved by making it possible to launch asynchronous calculations in specific NUMA domain. Otherwise, the classical Gmres algorithm is naturally synchronous and it remains difficult to take advantage with an asynchronous model. But other versions of the algorithm exist like Pipelined Gmres (p(l)-Gmres) \cite{Parall_GMRES} in which some of calculation steps are interlaced so that to hide global communications. This version integrating more asynchronous calculations could be investigated with HPX and compared to the actual Petsc implementation.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
