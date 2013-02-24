@@ -19,7 +19,6 @@
 \fxsetup{status=draft,theme=color}
 
 \usepackage{caption}
-\usepackage{subcaption}
 \captionsetup{compatibility=false}
 
 \usepackage[babel=true]{csquotes}
@@ -116,23 +115,6 @@ In this example (cf. Listing \ref{example_future}), Futures y1 and y2 each encap
 \subsection{Implementations}
 The various implementations of Futures/Promises model are either directly integrated in languages (Alice ML, Scala) or integrated in specific libraries (OCaml, Java). A class implementation is also integrated in the last C++ standard \cite{Futuresc++}. From this point, Stellar group (Systems Technologies, Emergent Parallelism and Algorithms Research) of CCT (Center for Computation and Technology - Louisiana State University) has adapted this model in particular for distributed computing and grid computing. This adaptation, fully written in C++, consists of a runtime system named HPX (High Performance ParalleX). The next section will review the main elements of this system.   
 
-% \begin{figure}[h]
-%       \begin{subfigure}[b]{0.5\textwidth}
-% 	      \centering
-% 	      \includegraphics[scale=0.4]{Images/Im2.png}
-% 	      \caption{Sequential program}
-% 	      
-%       \end{subfigure}
-%       \begin{subfigure}[b]{0.5\textwidth}
-% 	      \centering
-% 	      \includegraphics[scale=0.4]{Images/Im3.png}
-% 	      \caption{Program with Futures}
-%       \end{subfigure}\\
-%       
-%       \caption{Timing diagrams of example code}
-%       \label{chronofuture}
-% \end{figure}
-
 \begin{figure}[h]
 	\centering
 	\subfloat[Sequential program]
@@ -209,7 +191,7 @@ $v_0 \gets r_0/\|r_0\|_2$\\
   $x \gets x_0 + V_my_m$
 \end{algorithm}
 
-A first solution, that we won't deal with in this paper, is to minimize the inter-processes communications by adding redundancy in calculations. This approach so called \enquote{communication-avoiding} \cite{CAGmres} results to the CA-Gmres version of the algorithm. A second solution is to change the synchronization model in order to reduce the communication overhead; this is the solution that we will examine below.
+A first solution, that we won't deal with in this paper, is to minimize the inter-processes communications by adding redundancy in calculations. This approach so called \enquote{communication-avoiding} \cite{CAGMRES} results to the CA-Gmres version of the algorithm. A second solution is to change the synchronization model in order to reduce the communication overhead; this is the solution that we will examine below.
 
 \subsection{Implementation with Futures}
 In this study, we started from the original algorithm \cite{GMRES} developed by Y. Saad and M.H. Shultz. In each iteration, four kinds of operations are performed: sparse matrix-vector product, dot product, vector addition and vector scale. The most naive way to parallelize these various operations is to slice matrices and vectors and to attribute each pieces to a process (cf. Figure \ref{pargmres}). With HPX, the idea is to invoke several Futures in each iteration so that to perform an asynchronous calculation by domain. The second step including Givens rotations is mostly sequential and spend lower time than orthonormalization step. Then, we didn't take care of its optimization knowing its little influence on the performances.
@@ -223,7 +205,7 @@ In this study, we started from the original algorithm \cite{GMRES} developed by 
 \end{figure}
 
 \subsection{Experimental results}
-This Section confronts the performances of HPX Gmres implementation with the one provided by Petsc \cite{Petsc}. Recognized as a reference in HPC field, Petsc performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter to 30 to keep reasonable storage (Krylov basis vectors) and the maximum number of iterations to 1000, just enough for problems at hand. The used machine was a 2*6 core NUMA node. At this time, despite the popularity of this architecture and existing tools to manage it, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for Gmres when it uses BLAS interface. We will see below the impact on the performances.\smallskip  
+This Section confronts the performances of HPX Gmres implementation with the one provided by Petsc \cite{Petsc}. Recognized as a reference in HPC, Petsc performs its parallel calculations using MPI. These performance tests have been done for 5 problems from Matrix Market Collection and using the same initial guess $x_{0}$ and right-hand side vector $b$. We fixed the restart parameter to 30 to keep reasonable storage (Krylov basis vectors) and the maximum number of iterations to 1000, just enough for problems at hand. The used machine was a 2*6 core NUMA node. At this time, despite the common use of this architecture and existing tools to manage it, HPX doesn't take care in giving NUMA domain affinity to PX-thread. This could be problematic when applications are memory bound: this is the case for Gmres when it uses BLAS interface. We will see below the impact on the performances.\smallskip  
 
 To make a quantitative evaluation of performances, we used the Karp-Flatt metric: a parallelism measuring instrument developed from Amdahl's law and giving more informations about parallelism cost. The Karp-Flatt formula is:
 
@@ -236,12 +218,12 @@ $p$: Number of processors (or cores)\\
 
 \begin{figure}[h!]
 	\centering
-	\subfloat[\centering add20\newline$2395\times2395$]
+	\subfloat[add20\newline$2395\times2395$]
 	{
 		\includegraphics[scale=0.24]{Images/add20m.png}
 	}
 	\hspace{1cm}
-	\subfloat[\centering orsreg1\newline$2205\times2205$]
+	\subfloat[orsreg1\newline$2205\times2205$]
 	{
 		\includegraphics[scale=0.24]{Images/orsreg1m.png}
 	}
@@ -250,12 +232,12 @@ $p$: Number of processors (or cores)\\
 	{
 		\includegraphics[scale=0.24]{Images/pde900m.png}
 	}\\
-	\subfloat[\centering orsirr1\newline$1030\times1030$]
+	\subfloat[orsirr1\newline$1030\times1030$]
 	{
 		\includegraphics[scale=0.24]{Images/orsirr1m.png}
 	}
 	\hspace{1cm}
-	\subfloat[\centering sherman1\newline$1000\times1000$]
+	\subfloat[sherman1\newline$1000\times1000$]
 	{
 		\includegraphics[scale=0.24]{Images/sherman1m.png}
 	}
@@ -265,13 +247,13 @@ $p$: Number of processors (or cores)\\
 
 The major interest of this metric is to be representative of the evolution of parallelism cost. If $\alpha(p)$ increases with $p$, the declining efficiency of an algorithm is due to parallelism cost. If not, this is due to sequential part of the algorithm.\smallskip
 
-Globally, HPX and Petsc codes scale relatively well while used cores are located in the same NUMA domain (from 1 to 6 cores). But when we use more cores (from 7 to 12), performances degrade because of inter-domain data exchange. We can notice that this degradation is worst for HPX because all data are located in the same NUMA domain. The distributed nature of Petsc code in which every core owns their data makes its scalability less impaired. From here, we'll restrict our focus on one NUMA domain (from 1 to 6 threads).\smallskip
+Globally, HPX and Petsc codes scale relatively well while used cores are located in the same NUMA domain (from 1 to 6 cores). But when we use more cores (from 7 to 12), performances degrade because of remote memory access. We can notice that this degradation is worst for HPX because all data are located in the same NUMA domain. The distributed nature of Petsc code in which every core owns their data makes its scalability less impaired. From here, we'll restrict our focus on one NUMA domain (from 1 to 6 threads).\smallskip
 
-Structure of matrices (cf. Figure \ref{matrices}), in terms of non-zero values repartition, has a significant influence in performances particularly in SpMv step because more the values are far from the diagonal more Petsc can exploit the quasi-diagonal structure of matrices whereas HPX code simply uses the same tiling operation by line using BLAS SpMv. Then, we must take account the standard deviation of each problem.\smallskip     
+Structure of matrices (cf. Figure \ref{matrices}), in terms of non-zero values repartition, has a significant influence in performances particularly in SpMv step because more the values are far from the diagonal more Petsc can exploit the quasi-diagonal structure of matrices whereas HPX code simply uses the same blocking strategy using BLAS. Then, it is important to take account the standard deviation of each problem in case of performance gap between HPX and Petsc implementations.\smallskip     
 
-Figures \ref{add20} and \ref{orsreg_1} show performances for less sparse systems. In this case, each thread owns sufficient data to confer some scalability. Although execution times are equivalent, Karp-Flatt measuring show clearly that communication overhead has a more negative impact in HPX than in Petsc. Looking beyond the code structure, classical Gmres is largely synchronous and so it remains difficult to gain performance with asynchronism.\smallskip
+Figures \ref{add20} and \ref{orsreg_1} show performances for less sparse systems. In this case, each thread owns sufficient data to confer some scalability. Although execution times are equivalent, Karp-Flatt measuring show clearly that communication overhead has a more negative impact in HPX than in Petsc. Looking beyond the code structure, classical Gmres is largely synchronous and so it remains difficult to gain performance with asynchrony.\smallskip
 
-Figures \ref{orsirr_1} and \ref{sherman1} show performances for quasi-tridiagonal systems. In this case, Petsc optimize the sparse matrix location using lower storage than usual CSR format. Then, Petsc sequential code is faster than HPX one but scalability remains equivalent.\smallskip
+Figures \ref{orsirr_1} and \ref{sherman1} show performances for quasi-diagonal systems. In this case, Petsc optimize the sparse matrix location using lower storage and optimizing communication scheme of common operations. Then, Petsc sequential code is faster than HPX one but scalability remains equivalent.\smallskip
 
 Figure \ref{pde900} show performances for very sparse systems. The overhead treshold appears clearly seeing HPX results. Here, the SpMV step scales less because of overlap of calculation by communications (starting from 4 threads). This overhead treshold is approximatively $25*10^{6}$ cycles with $2.4$ Ghz frequency.
 
@@ -318,7 +300,7 @@ Figure \ref{pde900} show performances for very sparse systems. The overhead tres
 \newpage
 
 \section{Conclusion}
-In this paper, we exposed the main concept of \emph{Futures} and \emph{Promises} in order to improve the expression of asynchronous calculations in parallel applications. By using Parallex model and its corresponding implementation, we compared performance of our Gmres implementation to Petsc one in NUMA architecture. Results show equivalent scalability for the two implementations while used cores are located in the same NUMA domain. Performances can be improved by making it possible to launch asynchronous calculations in specific NUMA domain. Otherwise, the classical Gmres algorithm is naturally synchronous and it remains difficult to take advantage with an asynchronous model. But other versions of the algorithm exist like Pipelined Gmres (p(l)-Gmres) \cite{Parall_GMRES} in which some of calculation steps are interlaced so that to hide global communications. This version integrating more asynchronous calculations could be investigated with HPX and compared to the actual Petsc implementation.
+In this paper, we exposed the main concept of \emph{Futures} and \emph{Promises} in order to improve the expression of asynchronous calculations in parallel applications. By using Parallex model and its corresponding implementation, we compared performance of our Gmres implementation to Petsc in NUMA architecture. Results show equivalent scalability for the two implementations while used cores are located in the same NUMA domain. Performances can be improved by making it possible to launch asynchronous calculations in specific NUMA domain. Otherwise, the classical Gmres algorithm is naturally synchronous and it remains difficult to take advantage with an asynchronous model. But other versions of the algorithm exist like Pipelined Gmres (p(l)-Gmres) \cite{Parall_GMRES} in which some of calculation steps are interlaced so that to hide global communications. This version integrating more asynchronous calculations could be investigated with HPX and compared to the actual Petsc implementation.
 
 \bibliographystyle{abbrv}
 \bibliography{main}
