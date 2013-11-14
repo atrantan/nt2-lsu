@@ -1,0 +1,299 @@
+#include <iostream>
+#include <iomanip>
+#include <vector>
+
+#include <mkl_lapack.h>
+#include <mkl_lapacke.h>
+
+#include <hpx/hpx.hpp>
+#include <hpx/hpx_init.hpp>
+#include <hpx/include/threads.hpp>
+#include <hpx/include/local_lcos.hpp>
+
+#include "matrix.hpp"
+#include "kernels.h"
+#include "timer.hpp"
+
+using hpx::lcos::future;
+using hpx::lcos::local::dataflow;
+using hpx::util::unwrapped;
+
+#define DEFAULT_NB 4
+#define DEFAULT_SIZE 8
+
+int SIZE;
+int NB;
+int IB;
+
+int IONE=1;
+int ISEED[4] = {0,0,0,1};   /* initial seed for dlarnv() */
+
+typedef future<void>  TileFuture;
+
+void print_matrix(int M, int N, double *A, int LDA) {
+  std::cout << "----------" << std::endl;
+  for(int j=0; j < N; j++) {
+    for(int i=0; i < M; i++) {
+      std::cout << std::setw(16) << A[i*LDA+j];
+    }
+    std::cout << std::endl;
+  }
+  std::cout << "----------" << std::endl;
+}
+
+struct dgetrf_f
+{
+
+   dgetrf_f(Matrix<double> & A_,
+    int m_,
+    int n_,
+    int nb_,
+    int ib_,
+    int k_,
+    int LDA_,
+    std::vector<int> & IPIV_
+    )
+  :A(A_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),LDA(LDA_),IPIV(IPIV_)
+  {}
+
+  void operator()()
+  {
+    CORE_dgetrf_incpiv(m, n, ib, &A(k*nb,k*nb), LDA, &IPIV[k*nb+k*LDA], &info);
+  }
+
+  Matrix<double> & A;
+  int m,n,nb,ib,k,info,LDA;
+  std::vector<int> & IPIV;
+};
+
+struct dtstrf_f
+{
+
+   dtstrf_f(    Matrix<double> & A_,
+    Matrix<double> & L_,
+    int m_,
+    int n_,
+    int nb_,
+    int ib_,
+    int k_,
+    int mm_,
+    int LDA_,
+    std::vector<int> & IPIV_
+    )
+  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_),LDA(LDA_),
+   IPIV(IPIV_)
+  {}
+
+
+  void operator()()
+  {
+    std::vector<double> work(m*n);
+    CORE_dtstrf(m, n, ib, n, &A(k*nb,k*nb), LDA, &A(mm*nb,k*nb), LDA,
+                &L(mm*ib,k*nb), nb, &IPIV[mm*nb+k*LDA], &work[0], nb, &info);
+  }
+
+  Matrix<double> & A, & L;
+  int m,n,nb,ib,k,mm,info,LDA;
+  std::vector<int> & IPIV;
+};
+
+struct dgessm_f
+{
+
+   dgessm_f(    Matrix<double> & A_,
+    int m_,
+    int n_,
+    int nb_,
+    int ib_,
+    int k_,
+    int nn_,
+    int LDA_,
+    std::vector<int> & IPIV_
+    )
+  :A(A_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),nn(nn_),LDA(LDA_),
+   IPIV(IPIV_)
+  {}
+
+
+  void operator()()
+  {
+   CORE_dgessm(m, n, m, ib, &IPIV[k*nb+k*LDA], &A(k*nb,k*nb), LDA,
+     &A(k*nb,nn*nb), LDA);
+  }
+
+  Matrix<double> & A;
+  int m,n,nb,ib,k,nn,LDA;
+  std::vector<int> & IPIV;
+};
+
+
+struct dssssm_f
+{
+   dssssm_f(    Matrix<double> & A_,
+    Matrix<double> & L_,
+    int m_,
+    int n_,
+    int nb_,
+    int ib_,
+    int k_,
+    int mm_,
+    int nn_,
+    int LDA_,
+    std::vector<int> & IPIV_
+    )
+  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_),nn(nn_),LDA(LDA_),IPIV(IPIV_)
+  {}
+
+
+  void operator()()
+  {
+   CORE_dssssm(nb, n, m, n, nb, ib, &A(k*nb,nn*nb), LDA, &A(mm*nb,nn*nb), LDA,
+               &L(mm*ib,k*nb), m, &A(mm*nb,k*nb), LDA, &IPIV[mm*nb+k*LDA]);
+  }
+
+  Matrix<double> & A, & L;
+  int m,n,nb,ib,k,mm,nn,LDA;
+  std::vector<int> & IPIV;
+};
+
+int dgetrf(int M, int N, Matrix<double>& A, int LDA, Matrix<double>& L, std::vector<int>& IPIV) {
+
+    int TILES = M/NB;
+    int m = M/TILES;
+    int n = N/TILES;
+    int ib = IB;
+    int nb = NB;
+
+    int src(0), dst(1);
+
+    std::vector< Matrix<TileFuture> > Tiles;
+    Tiles.reserve(TILES);
+
+    Tiles.push_back(Matrix<TileFuture>(TILES+1,TILES+1,hpx::lcos::make_ready_future()));
+
+    for(int k=0; k <TILES; k++)
+    Tiles.push_back(Matrix<TileFuture>(TILES-k,TILES-k));
+
+    for(int k=0; k < TILES; k++) {
+
+    int km = (k==TILES-1) ? M - k*m : m;
+    int kn = (k==TILES-1) ? N - k*n : n;
+
+    //step 1
+    Tiles[dst](0,0) = dataflow(unwrapped(dgetrf_f(A,km,kn,nb,ib,k,LDA,IPIV)),
+                               Tiles[src](1,1)
+                              );
+    //step 2
+    for(int mm = k+1; mm < TILES; mm++) {
+
+      int m_ = (mm==TILES-1) ? M -mm*m : m;
+
+      Tiles[dst](mm-k,0) = dataflow(unwrapped(dtstrf_f(A,L,m_,kn,nb,ib,k,mm,LDA,IPIV)),
+                                    Tiles[dst](mm-k-1,0),
+                                    Tiles[src](mm-k+1,1)
+                                   );
+    }
+
+    //step 3
+    for(int nn = k+1; nn < TILES; nn++) {
+
+    int n_ = (nn==TILES-1) ? N - nn*n : n;
+
+    Tiles[dst](0,nn-k) = dataflow(unwrapped(dgessm_f(A,km,n_,nb,ib,k,nn,LDA,IPIV)),
+                                         Tiles[dst](0,0),
+                                         Tiles[src](1,nn-k+1)
+                                 );
+    }
+
+    //step 4
+    for(int nn = k+1; nn < TILES; nn++) {
+            for(int mm=k+1; mm < TILES; mm++) {
+
+                int m_ = (mm==TILES-1) ? M - mm*m : m;
+                int n_ = (nn==TILES-1) ? N - nn*n : n;
+
+                Tiles[dst](mm-k,nn-k) = dataflow(unwrapped(dssssm_f(A,L,m_,n_,nb,ib,k,mm,nn,LDA,IPIV)),
+                                                 Tiles[dst](mm-k,0),
+                                                 Tiles[dst](mm-k-1,nn-k),
+                                                 Tiles[src](mm-k+1,nn-k+1)
+                                                );
+            }
+    }
+
+        src ++;
+        dst ++;
+      }
+
+    Tiles[src](0,0).get();
+
+    return 0;
+};
+
+struct dgetrf_test
+{
+    dgetrf_test()
+    :N(SIZE),LDA(N),LDL(IB*(LDA/NB)),LDAxN(LDA*N)
+    ,A(LDA,N),L(LDL,N),IPIV(N*LDA/NB)
+    {}
+
+
+    void reset()
+    {
+        /* Initialize A Matrix */
+        dlarnv(&IONE, ISEED, &LDAxN, &A(0,0));
+    }
+
+    void operator()()
+    {
+       info = dgetrf(N, N, A, LDA, L, IPIV);
+    }
+
+    int N;
+    int LDA;
+    int LDL;
+    int info;
+    int LDAxN;
+
+    Matrix<double> A;
+    Matrix<double> L;
+    std::vector<int> IPIV;
+
+};
+
+
+int hpx_main(boost::program_options::variables_map& vm){
+
+    SIZE = vm["s"].as<std::size_t>();
+    NB = vm["b"].as<std::size_t>();
+    IB = (NB<40) ? NB : 40;
+
+    dgetrf_test test;
+
+    std::cout << "Running LU factorization" << std::endl;
+
+    //LU factorization of the matrix A
+    perform_benchmark(test, 10);
+
+    return hpx::finalize(); // Handles HPX shutdown
+}
+
+int main(int argc, char* argv[])
+{
+    // Configure application-specific options
+    boost::program_options::options_description
+    desc_commandline("Usage: " HPX_APPLICATION_STRING " [options]");
+
+    desc_commandline.add_options()
+    ( "s"
+    , boost::program_options::value<std::size_t>()->default_value(DEFAULT_SIZE)
+    , "Size of matrix")
+    ;
+    desc_commandline.add_options()
+    ( "b"
+    , boost::program_options::value<std::size_t>()->default_value(DEFAULT_NB)
+    , "Size of block")
+    ;
+
+    // Initialize and run HPX
+    return hpx::init(desc_commandline, argc, argv);
+}
