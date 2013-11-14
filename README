@@ -1,0 +1,37 @@
+------------------------------
+Installation and Configuration
+------------------------------
+
+Plasma
+---------
+Prerequisites: MKL blas
+
+1. Find the packages at: http://icl.cs.utk.edu/plasma/software/index.html
+
+2. > tar -xf plasma-installer_2.5.2.tar.gz
+   > cd plasma-installer_2.5.2
+   > ./setup.py --prefix=/path/to/plasma/installation
+                --cc=/usr/bin/gcc-4.7
+                --fc=/usr/bin/gfortran-4.7
+                --fflags=-O2 -fPIC -I/opt/intel/mkl/include -L/opt/intel/mkl/lib
+                --cflags=-O2 -fPIC -I/opt/intel/mkl/include -L/opt/intel/mkl/lib
+                --blaslib=-L/opt/intel/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+                          -L/opt/intel/lib/intel64 -limf
+                --downlapack
+                --downcblas
+                --downlapc
+                --notesting
+                --noopt=-O0 -fPIC
+
+3. Edit your .bashrc file (or .profile file) and add the following lines
+replacing {PLASMA_INSTALL_DIR} by the correct pathname of your plasma installation
+
+export PLASMA_ROOT={PLASMA_INSTALL_DIR}
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PLASMA_ROOT/lib"
+
+Hpx
+----
+Edit your .bashrc file (or .profile file) and add the following line
+replacing {HPX_INSTALL_DIR} by the correct pathname of your hpx installation
+
+export HPX_ROOT={HPX_INSTALL_DIR}
