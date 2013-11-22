@@ -20,10 +20,6 @@ using hpx::when_all;
 #define DEFAULT_NB 4
 #define DEFAULT_SIZE 8
 
-int SIZE;
-int NB;
-int IB;
-
 int IONE=1;
 int ISEED[4] = {0,0,0,1};   /* initial seed for dlarnv() */
 
@@ -158,13 +154,11 @@ struct dssssm_f
   std::vector<int> & IPIV;
 };
 
-int dgetrf(int M, int N, Matrix<double>& A, int LDA, Matrix<double>& L, std::vector<int>& IPIV) {
+int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<double>& L, std::vector<int>& IPIV) {
 
-    int TILES = M/NB;
+    int TILES = M/nb;
     int m = M/TILES;
     int n = N/TILES;
-    int ib = IB;
-    int nb = NB;
 
     int src(0), dst(1);
 
@@ -231,9 +225,9 @@ int dgetrf(int M, int N, Matrix<double>& A, int LDA, Matrix<double>& L, std::vec
 
 struct dgetrf_test
 {
-    dgetrf_test()
-    :N(SIZE),LDA(N),LDL(IB*(LDA/NB)),LDAxN(LDA*N)
-    ,A(LDA,N),L(LDL,N),IPIV(N*LDA/NB)
+    dgetrf_test(std::size_t size_,std::size_t nb_, std::size_t ib_)
+    :N(size_),LDA(N),LDL(ib_*(LDA/nb_)),LDAxN(LDA*N)
+    ,A(LDA,N),L(LDL,N),IPIV(N*LDA/nb_)
     {}
 
 
@@ -245,7 +239,7 @@ struct dgetrf_test
 
     void operator()()
     {
-       info = dgetrf(N, N, A, LDA, L, IPIV);
+       info = dgetrf(N, N, nb, ib, A, LDA, L, IPIV);
     }
 
     int N;
@@ -253,6 +247,8 @@ struct dgetrf_test
     int LDL;
     int info;
     int LDAxN;
+    int nb;
+    int ib;
 
     Matrix<double> A;
     Matrix<double> L;
@@ -263,11 +259,11 @@ struct dgetrf_test
 
 int hpx_main(boost::program_options::variables_map& vm){
 
-    SIZE = vm["s"].as<std::size_t>();
-    NB = vm["b"].as<std::size_t>();
-    IB = (NB<40) ? NB : 40;
+    std::size_t size = vm["s"].as<std::size_t>();
+    std::size_t nb = vm["b"].as<std::size_t>();
+    std::size_t ib = (nb<40) ? nb : 40;
 
-    dgetrf_test test;
+    dgetrf_test test(size,nb,ib);
 
     std::cout << "Running LU factorization" << std::endl;
 

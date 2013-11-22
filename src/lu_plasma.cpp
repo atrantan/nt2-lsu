@@ -17,10 +17,6 @@
 
 using namespace std;
 
-int SIZE;
-int NB;
-int CORES;
-
 int IONE=1;
 int ISEED[4] = {0,0,0,1};   /* initial seed for dlarnv() */
 
@@ -39,8 +35,8 @@ void print_array(int M, int N, T *A, int LDA) {
 
 struct dgetrf_test
 {
-    dgetrf_test()
-    :N(SIZE),LDA(N),LDAxN(LDA*N)
+    dgetrf_test(int size_)
+    :N(size_),LDA(N),LDAxN(LDA*N)
     {
         // Allocate A
         A = (double *)malloc(LDA*N*(sizeof*A));
@@ -79,37 +75,37 @@ struct dgetrf_test
 
 int main(int argc, char* argv[]) {
 
-        SIZE = DEFAULT_SIZE;
-        NB = DEFAULT_NB;
-        CORES = DEFAULT_CORES;
+        int size = DEFAULT_SIZE;
+        int nb = DEFAULT_NB;
+        int cores = DEFAULT_CORES;
         char c;
 
         while ((c = getopt(argc, argv, "n:b:a:")) != -1)
         switch (c){
             case 'n':
-                SIZE = atoi(optarg);
+                size = atoi(optarg);
             case 'b':
-                NB = atoi(optarg);
+                nb = atoi(optarg);
                 break;
             case 'a':
-                CORES = atoi(optarg);
+                cores = atoi(optarg);
                 break;
             default:
                 break;
         }
 
     //Plasma Initialize
-    PLASMA_Init(CORES);
+    PLASMA_Init(cores);
 
     //PLASMA_Disable(PLASMA_AUTOTUNING);
-    //PLASMA_Set(PLASMA_TILE_SIZE, NB);
-    //PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, NB);
+    //PLASMA_Set(PLASMA_TILE_SIZE, nb);
+    //PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
 
     PLASMA_Set(PLASMA_SCHEDULING_MODE, PLASMA_DYNAMIC_SCHEDULING);
 
-    dgetrf_test test;
+    dgetrf_test test(size);
 
-    printf("-- PLASMA is initialized to run on %d cores. \n",CORES);
+    printf("-- PLASMA is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
     perform_benchmark(test, 10);

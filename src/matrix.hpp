@@ -14,39 +14,39 @@ template <class T>
 class Matrix
 {
   public:
-  
-BOOST_COPYABLE_AND_MOVABLE(Matrix)    
-    
+
+BOOST_COPYABLE_AND_MOVABLE(Matrix)
+
 friend class boost::serialization::access;
 
 template <typename Archive>
 void serialize(Archive & ar, unsigned)
-  { 
+  {
     ar & height;
     ar & width;
     ar & data;
   }
-  
+
   std::size_t height;
   std::size_t width;
-  std::vector<T> data;  
-      
+  std::vector<T> data;
+
   Matrix(std::size_t h=0, std::size_t w=0, T const & c=T())
   :height(h),width(w),data(w*h,c)
   {}
-  
+
   Matrix(size_t h, size_t w, std::vector<T> &d)
   :height(h),width(w),data(d)
   {}
-  
+
 	~Matrix() {}
 
   T& operator()(std::size_t i, std::size_t j)
   { return data[i+j*height]; }
-  
+
   T const & operator()(std::size_t i, std::size_t j)const
-  { return data[i+j*height]; }  
-  
+  { return data[i+j*height]; }
+
   Matrix(const Matrix& p) // Copy constructor (as usual)
   : height(p.height),width(p.width),data(p.data)
   {
@@ -58,7 +58,7 @@ void serialize(Archive & ar, unsigned)
       if (this != &p){
       height = p.height;
       width = p.width;
-      data = p.data;	
+      data = p.data;
       }
       //std::cout<<"Copy assignment"<<std::endl;
       return *this;
@@ -81,7 +81,7 @@ void serialize(Archive & ar, unsigned)
       }
       return *this;
    }
-  
+
 };
 
 #endif // MATRIX_H
