@@ -70,13 +70,13 @@ if not os.path.exists(dumpdir):
 # plasma version, has fixed block size
 for n in ncores:
 	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
-	numaoptions = (M>0) ? "numactl -i 0-{0} ".format(str(M)) ! ""
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
 	for s in psize:
 		for b in bsize:
 			dumpfile = dumpdir+"/lu_plasma_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
 			cmdline = "srun -p lyra -N 1 "+numaoptions+"./src/lu_plasma -n{0} -b{1} -a{2} > {3}".format(s, b, n, dumpfile)
 			print cmdline
-			os.system(cmdline)
+#			os.system(cmdline)
 
 #create lu dataflow dump directory
 dumpdir = 'perfs/lu_dataflow';
@@ -87,13 +87,13 @@ if not os.path.exists(dumpdir):
 #dataflow version
 for n in ncores:
 	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
-	numaoptions = (M>0) ? "numactl -i 0-{0} ".format(str(M)) ! ""
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
 	for s in psize:
 		for b in bsize:
 			dumpfile = dumpdir+"/lu_dataflow_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
-			cmdline = "srun -p lyra -N 1 -c {2} -n 1 "+numaoptions+"./bin/lu_dataflow --s {0} --b {1} > {3}".format(s, b, n, dumpfile)
+			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_dataflow --s {0} --b {1} > {2}".format(s, b,dumpfile)
 			print cmdline
-			os.system(cmdline)
+#			os.system(cmdline)
 
 #create lu hpx dump directory
 dumpdir = 'perfs/lu_hpx'
@@ -104,13 +104,13 @@ if not os.path.exists(dumpdir):
 #hpx version
 for n in ncores:
 	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
-	numaoptions = (M>0) ? "numactl -i 0-{0} ".format(str(M)) ! ""
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
 	for s in psize:
  		for b in bsize:
 			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
-			cmdline = "srun -p lyra -N 1 -c {2} -n 1 "+numaoptions+"./bin/lu_hpx --s {0} --b {1} > {3}".format(s, b, n, dumpfile)
+			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_hpx --s {0} --b {1} > {2}".format(s, b,dumpfile)
 			print cmdline
-			os.system(cmdline)
+#			os.system(cmdline)
 
 # plot_scalability(["lu_hpx"], "Scalability of lu hpx version, for different block sizes over problem size",
 # 								"problem_size", psize, "block_size", bsize,
@@ -124,15 +124,15 @@ for n in ncores:
 # 								"problem_size", psize, "block_size", bsize,
 # 								"problem_size=#0_block_size=#1_ncores=6")
 
-plot_scalability(["lu_hpx"], "Scalability of lu hpx version",
- 								"ncores", ncores, "problem_size", psize,
- 								"problem_size=#1_block_size=200_ncores=#0")
-
-plot_scalability(["lu_dataflow"], "Scalability of lu dataflow version",
-								"ncores", ncores, "problem_size", psize,
-								"problem_size=#1_block_size=200_ncores=#0")
-
-plot_scalability(["lu_plasma"], "Scalability of lu plasma version",
- 								"ncores", ncores, "problem_size", psize,
- 								"problem_size=#1_block_size=200_ncores=#0")
+#plot_scalability(["lu_hpx"], "Scalability of lu hpx version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")
+#
+#plot_scalability(["lu_dataflow"], "Scalability of lu dataflow version",
+#								"ncores", ncores, "problem_size", psize,
+#								"problem_size=#1_block_size=200_ncores=#0")
+#
+#plot_scalability(["lu_plasma"], "Scalability of lu plasma version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")
 
