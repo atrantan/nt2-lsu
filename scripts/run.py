@@ -69,7 +69,7 @@ if not os.path.exists(dumpdir):
 
 # plasma version, has fixed block size
 for n in ncores:
-	M = (int(n)//6)+(int(n)%6>0) # number of nodes in function of number of cores
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
 	for s in psize:
 		for b in bsize:
 			dumpfile = dumpdir+"/lu_plasma_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
@@ -84,7 +84,7 @@ if not os.path.exists(dumpdir):
 
 #dataflow version
 for n in ncores:
-	M = (int(n)//6)+(int(n)%6>0) # number of nodes in function of number of cores
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
 	for s in psize:
 		for b in bsize:
 			dumpfile = dumpdir+"/lu_dataflow_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
@@ -99,7 +99,7 @@ if not os.path.exists(dumpdir):
 
 #hpx version
 for n in ncores:
-	M = (int(n)//6)+(int(n)%6>0) # number of nodes in function of number of cores
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
 	for s in psize:
  		for b in bsize:
 			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
