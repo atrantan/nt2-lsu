@@ -14,7 +14,7 @@
 #include "kernels.h"
 #include "timer.hpp"
 
-using hpx::lcos::future;
+using hpx::lcos::shared_future;
 using hpx::when_all;
 
 #define DEFAULT_NB 4
@@ -23,7 +23,7 @@ using hpx::when_all;
 int IONE=1;
 int ISEED[4] = {0,0,0,1};   /* initial seed for dlarnv() */
 
-typedef future<void>  TileFuture;
+typedef shared_future<void>  TileFuture;
 
 void print_matrix(int M, int N, double *A, int LDA) {
   std::cout << "----------" << std::endl;

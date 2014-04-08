@@ -61,6 +61,40 @@ bsize = ['200']
 # bsize = ['50', '100', '200']
 iterations = 10
 
+#create lu mkl dump directory
+dumpdir = 'perfs/lu_mkl';
+if not os.path.exists(dumpdir):
+	print "creating "+dumpdir+" directory"
+	os.makedirs(dumpdir)
+
+# mkl version, has fixed block size
+for n in ncores:
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
+	for s in psize:
+		for b in bsize:
+			dumpfile = dumpdir+"/lu_mkl_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
+			cmdline = "srun -p lyra -N 1 "+numaoptions+"OMP_NUM_THREADS={2} ./src/lu_mkl -n{0} -b{1} -a{2} > {3}".format(s, b, n, dumpfile)
+			print cmdline
+#			os.system(cmdline)
+
+#create lu tbb dump directory
+dumpdir = 'perfs/lu_tbb';
+if not os.path.exists(dumpdir):
+	print "creating "+dumpdir+" directory"
+	os.makedirs(dumpdir)
+
+# tbb version, has fixed block size
+for n in ncores:
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
+	for s in psize:
+		for b in bsize:
+			dumpfile = dumpdir+"/lu_tbb_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
+			cmdline = "srun -p lyra -N 1 "+numaoptions+"./src/lu_tbb -n{0} -b{1} -a{2} > {3}".format(s, b, n, dumpfile)
+			print cmdline
+#			os.system(cmdline)
+
 #create lu plasma dump directory
 dumpdir = 'perfs/lu_plasma';
 if not os.path.exists(dumpdir):
@@ -95,22 +129,22 @@ for n in ncores:
 			print cmdline
 #			os.system(cmdline)
 
-#create lu hpx dump directory
-dumpdir = 'perfs/lu_hpx'
-if not os.path.exists(dumpdir):
- 	print "creating "+dumpdir+" directory"
- 	os.makedirs(dumpdir)
+# #create lu hpx dump directory
+# dumpdir = 'perfs/lu_hpx'
+# if not os.path.exists(dumpdir):
+#  	print "creating "+dumpdir+" directory"
+#  	os.makedirs(dumpdir)
 
-#hpx version
-for n in ncores:
-	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
-	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
-	for s in psize:
- 		for b in bsize:
-			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
-			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_hpx --s {0} --b {1} > {2}".format(s, b,dumpfile)
-			print cmdline
-#			os.system(cmdline)
+# #hpx version
+# for n in ncores:
+# 	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
+# 	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
+# 	for s in psize:
+#  		for b in bsize:
+# 			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
+# 			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_hpx --s {0} --b {1} > {2}".format(s, b,dumpfile)
+# 			print cmdline
+# #			os.system(cmdline)
 
 # plot_scalability(["lu_hpx"], "Scalability of lu hpx version, for different block sizes over problem size",
 # 								"problem_size", psize, "block_size", bsize,
@@ -124,15 +158,22 @@ for n in ncores:
 # 								"problem_size", psize, "block_size", bsize,
 # 								"problem_size=#0_block_size=#1_ncores=6")
 
-#plot_scalability(["lu_hpx"], "Scalability of lu hpx version",
-# 								"ncores", ncores, "problem_size", psize,
-# 								"problem_size=#1_block_size=200_ncores=#0")
-#
-#plot_scalability(["lu_dataflow"], "Scalability of lu dataflow version",
-#								"ncores", ncores, "problem_size", psize,
-#								"problem_size=#1_block_size=200_ncores=#0")
-#
-#plot_scalability(["lu_plasma"], "Scalability of lu plasma version",
+
+# plot_scalability(["lu_hpx"], "Scalability of lu hpx version",
 # 								"ncores", ncores, "problem_size", psize,
 # 								"problem_size=#1_block_size=200_ncores=#0")
 
+# plot_scalability(["lu_dataflow"], "Scalability of lu dataflow version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")
+
+# plot_scalability(["lu_plasma"], "Scalability of lu plasma version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")
+# plot_scalability(["lu_mkl"], "Scalability of lu mkl version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")
+
+# plot_scalability(["lu_tbb"], "Scalability of lu tbb version",
+# 								"ncores", ncores, "problem_size", psize,
+# 								"problem_size=#1_block_size=200_ncores=#0")

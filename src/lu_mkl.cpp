@@ -9,8 +9,6 @@
 #include <mkl_lapacke.h>
 #include <mkl_lapack.h>
 
-#include <plasma.h>
-
 #define DEFAULT_NB 4
 #define DEFAULT_SIZE 8
 #define DEFAULT_CORES 6
@@ -40,14 +38,11 @@ struct dgetrf_test
     {
         // Allocate A
         A = (double *)malloc(LDA*N*(sizeof*A));
-
-        // Allocate L and IPIV
-        info = PLASMA_Alloc_Workspace_dgetrf_incpiv(N, N, &L, &IPIV);
     }
 
     ~dgetrf_test()
     {
-        free(A); free(IPIV); free(L);
+        free(A); free(IPIV);
     }
 
     void reset()
@@ -58,7 +53,7 @@ struct dgetrf_test
 
     void operator()()
     {
-       info = PLASMA_dgetrf_incpiv(N, N, A, LDA, L, IPIV);
+       info = LAPACKE_dgetrf(LAPACK_COL_MAJOR, N, N, A, LDA, IPIV );
     }
 
     int N;
@@ -67,7 +62,6 @@ struct dgetrf_test
     int LDAxN;
 
     double *A;
-    PLASMA_desc *L;
     int *IPIV;
 
 };
@@ -94,27 +88,12 @@ int main(int argc, char* argv[]) {
                 break;
         }
 
-    //Plasma Initialize
-    PLASMA_Init(cores);
-
-    // PLASMA_Disable(PLASMA_AUTOTUNING);
-    // PLASMA_Set(PLASMA_TILE_SIZE, nb);
-    // PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
-
-    PLASMA_Set(PLASMA_SCHEDULING_MODE, PLASMA_DYNAMIC_SCHEDULING);
-
     dgetrf_test test(size);
 
-    printf("-- PLASMA is initialized to run on %d cores. \n",cores);
+    printf("-- MKL is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
     perform_benchmark(test, 10);
-    // test.reset();
-    // test();
-    // print_array(size, size, test.A, size);
-
-
-    PLASMA_Finalize();
 
     return 0;
 }

@@ -5,26 +5,21 @@
 #include <mkl_lapack.h>
 #include <mkl_lapacke.h>
 
-#include <hpx/hpx.hpp>
-#include <hpx/hpx_init.hpp>
-#include <hpx/include/threads.hpp>
-#include <hpx/include/local_lcos.hpp>
-
+#include <tbb/tbb.h>
+#include <tbb/flow_graph.h>
 #include "matrix.hpp"
 #include "kernels.h"
 #include "timer.hpp"
 
-using hpx::lcos::shared_future;
-using hpx::lcos::local::dataflow;
-using hpx::util::unwrapped;
+using namespace tbb;  
+using namespace tbb::flow;
 
 #define DEFAULT_NB 4
 #define DEFAULT_SIZE 8
+#define DEFAULT_CORES 6
 
 int IONE=1;
 int ISEED[4] = {0,0,0,1};   /* initial seed for dlarnv() */
-
-typedef shared_future<void>  TileFuture;
 
 void print_matrix(int M, int N, double *A, int LDA) {
   std::cout << "----------" << std::endl;
@@ -36,6 +31,12 @@ void print_matrix(int M, int N, double *A, int LDA) {
   }
   std::cout << "----------" << std::endl;
 }
+
+struct empty_body
+{
+    void operator()( continue_msg ) const
+    {}
+};
 
 struct dgetrf_f
 {
@@ -52,7 +53,7 @@ struct dgetrf_f
   :A(A_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),LDA(LDA_),IPIV(IPIV_)
   {}
 
-  void operator()()
+  void operator()(const continue_msg&)
   {
     CORE_dgetrf_incpiv(m, n, ib, &A(k*nb,k*nb), LDA, &IPIV[k*nb+k*LDA], &info);
   }
@@ -81,7 +82,7 @@ struct dtstrf_f
   {}
 
 
-  void operator()()
+  void operator()(const continue_msg&)
   {
     std::vector<double> work(m*n);
     CORE_dtstrf(m, n, ib, n, &A(k*nb,k*nb), LDA, &A(mm*nb,k*nb), LDA,
@@ -111,7 +112,7 @@ struct dgessm_f
   {}
 
 
-  void operator()()
+  void operator()(const continue_msg&)
   {
    CORE_dgessm(m, n, m, ib, &IPIV[k*nb+k*LDA], &A(k*nb,k*nb), LDA,
      &A(k*nb,nn*nb), LDA);
@@ -141,7 +142,7 @@ struct dssssm_f
   {}
 
 
-  void operator()()
+  void operator()(const continue_msg&)
   {
    CORE_dssssm(nb, n, m, n, nb, ib, &A(k*nb,nn*nb), LDA, &A(mm*nb,nn*nb), LDA,
                &L(mm*ib,k*nb), m, &A(mm*nb,k*nb), LDA, &IPIV[mm*nb+k*LDA]);
@@ -160,13 +161,15 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
 
     int src(0), dst(1);
 
-    std::vector< Matrix<TileFuture> > Tiles;
+    graph g;
+    continue_node<continue_msg> start(g,empty_body());
+    std::vector< Matrix< continue_node<continue_msg> * > > Tiles;
     Tiles.reserve(TILES);
 
-    Tiles.push_back(Matrix<TileFuture>(TILES+1,TILES+1,hpx::lcos::make_ready_future()));
+    Tiles.push_back(Matrix< continue_node<continue_msg> * >(TILES+1,TILES+1, & start));
 
     for(int k=0; k <TILES; k++)
-    Tiles.push_back(Matrix<TileFuture>(TILES-k,TILES-k));
+    Tiles.push_back(Matrix< continue_node<continue_msg> * >(TILES-k,TILES-k));
 
     for(int k=0; k < TILES; k++) {
 
@@ -174,18 +177,17 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
     int kn = (k==TILES-1) ? N - k*n : n;
 
     //step 1
-    Tiles[dst](0,0) = dataflow(unwrapped(dgetrf_f(A,km,kn,nb,ib,k,LDA,IPIV)),
-                               Tiles[src](1,1)
-                              );
+    Tiles[dst](0,0) = new continue_node<continue_msg>( g, dgetrf_f(A,km,kn,nb,ib,k,LDA,IPIV) );
+    make_edge(*(Tiles[src](1,1)),*(Tiles[dst](0,0)) );   
+
     //step 2
     for(int mm = k+1; mm < TILES; mm++) {
 
       int m_ = (mm==TILES-1) ? M -mm*m : m;
 
-      Tiles[dst](mm-k,0) = dataflow(unwrapped(dtstrf_f(A,L,m_,kn,nb,ib,k,mm,LDA,IPIV)),
-                                    Tiles[dst](mm-k-1,0),
-                                    Tiles[src](mm-k+1,1)
-                                   );
+      Tiles[dst](mm-k,0) = new continue_node<continue_msg>( g, dtstrf_f(A,L,m_,kn,nb,ib,k,mm,LDA,IPIV)) ;
+      make_edge(*(Tiles[dst](mm-k-1,0)), *(Tiles[dst](mm-k,0)) );
+      make_edge(*(Tiles[src](mm-k+1,1)), *(Tiles[dst](mm-k,0)) );
     }
 
     //step 3
@@ -193,10 +195,9 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
 
     int n_ = (nn==TILES-1) ? N - nn*n : n;
 
-    Tiles[dst](0,nn-k) = dataflow(unwrapped(dgessm_f(A,km,n_,nb,ib,k,nn,LDA,IPIV)),
-                                         Tiles[dst](0,0),
-                                         Tiles[src](1,nn-k+1)
-                                 );
+    Tiles[dst](0,nn-k) = new continue_node<continue_msg>( g, dgessm_f(A,km,n_,nb,ib,k,nn,LDA,IPIV)) ;
+    make_edge(*(Tiles[dst](0,0)), *(Tiles[dst](0,nn-k)));
+    make_edge(*(Tiles[src](1,nn-k+1)), *(Tiles[dst](0,nn-k)));
     }
 
     //step 4
@@ -206,19 +207,32 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
                 int m_ = (mm==TILES-1) ? M - mm*m : m;
                 int n_ = (nn==TILES-1) ? N - nn*n : n;
 
-                Tiles[dst](mm-k,nn-k) = dataflow(unwrapped(dssssm_f(A,L,m_,n_,nb,ib,k,mm,nn,LDA,IPIV)),
-                                                 Tiles[dst](mm-k,0),
-                                                 Tiles[dst](mm-k-1,nn-k),
-                                                 Tiles[src](mm-k+1,nn-k+1)
-                                                );
+                Tiles[dst](mm-k,nn-k) = new continue_node<continue_msg>( g, dssssm_f(A,L,m_,n_,nb,ib,k,mm,nn,LDA,IPIV));
+                make_edge(*(Tiles[dst](mm-k,0)), *(Tiles[dst](mm-k,nn-k)));
+                make_edge(*(Tiles[dst](mm-k-1,nn-k)), *(Tiles[dst](mm-k,nn-k)));
+                make_edge(*(Tiles[src](mm-k+1,nn-k+1)), *(Tiles[dst](mm-k,nn-k)));
             }
     }
 
-        src ++;
-        dst ++;
-      }
+      src ++;
+      dst ++;
+    }
 
-    Tiles[src](0,0).get();
+    start.try_put(continue_msg()); 
+    g.wait_for_all();
+
+    
+    Tiles.push_back(Matrix< continue_node<continue_msg> * >(TILES+1,TILES+1, & start));
+
+    for(int k=0; k <TILES; k++)
+    {
+        std::size_t sizemax = (TILES-k)*(TILES-k);
+
+        for(int i=0; i <sizemax; i++)
+        {
+          delete( (Tiles[k+1].data)[i] );
+        }
+    }
 
     return 0;
 };
@@ -257,15 +271,34 @@ struct dgetrf_test
 };
 
 
-int hpx_main(boost::program_options::variables_map& vm){
+int main(int argc, char* argv[]) {
 
-    std::size_t size = vm["s"].as<std::size_t>();
-    std::size_t nb = vm["b"].as<std::size_t>();
-    std::size_t ib = (nb<40) ? nb : 40;
+        int size = DEFAULT_SIZE;
+        int nb = DEFAULT_NB;
+        std::size_t ib = (nb<40) ? nb : 40;
+
+        int cores = DEFAULT_CORES;
+        char c;
+
+        while ((c = getopt(argc, argv, "n:b:a:")) != -1)
+        switch (c){
+            case 'n':
+                size = atoi(optarg);
+            case 'b':
+                nb = atoi(optarg);
+                break;
+            case 'a':
+                cores = atoi(optarg);
+                break;
+            default:
+                break;
+        }
+
+    tbb::task_scheduler_init init(cores);
 
     dgetrf_test test(size,nb,ib);
 
-    std::cout << "Running LU factorization" << std::endl;
+    printf("--TBB is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
     perform_benchmark(test, 10);
@@ -274,26 +307,5 @@ int hpx_main(boost::program_options::variables_map& vm){
     // test();
     // print_matrix(size, size, &(test.A(0,0)), size);
 
-    return hpx::finalize(); // Handles HPX shutdown
-}
-
-int main(int argc, char* argv[])
-{
-    // Configure application-specific options
-    boost::program_options::options_description
-    desc_commandline("Usage: " HPX_APPLICATION_STRING " [options]");
-
-    desc_commandline.add_options()
-    ( "s"
-    , boost::program_options::value<std::size_t>()->default_value(DEFAULT_SIZE)
-    , "Size of matrix")
-    ;
-    desc_commandline.add_options()
-    ( "b"
-    , boost::program_options::value<std::size_t>()->default_value(DEFAULT_NB)
-    , "Size of block")
-    ;
-
-    // Initialize and run HPX
-    return hpx::init(desc_commandline, argc, argv);
+    return 0;
 }
