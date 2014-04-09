@@ -226,7 +226,7 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
 struct dgetrf_test
 {
     dgetrf_test(std::size_t size_,std::size_t nb_, std::size_t ib_)
-    :N(size_),LDA(N),LDL(ib_*(LDA/nb_)),LDAxN(LDA*N)
+    :N(size_),LDA(N),LDL(ib_*(LDA/nb_)),LDAxN(LDA*N),nb(nb_),ib(ib_)
     ,A(LDA,N),L(LDL,N),IPIV(N*LDA/nb_)
     {}
 
