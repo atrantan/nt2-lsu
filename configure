@@ -1,0 +1,21 @@
+#!/bin/bash
+
+SOURCE_DIR=$PWD
+
+if ! [ -d build ]; then
+	mkdir build
+fi
+
+cd build
+
+cmake ../ -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.7 -DCMAKE_C_COMPILER=/usr/bin/gcc-4.7
+
+if ! [ -d src ]; then
+	mkdir src
+fi
+
+cd src
+
+echo "mcxx -o lu_ompss --ompss -L/opt/intel/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -I/opt/intel/mkl/include "$SOURCE_DIR"/src/lu_ompss.cpp "$SOURCE_DIR"/src/kernels.c" > compile
+
+cd $SOURCE_DIR
