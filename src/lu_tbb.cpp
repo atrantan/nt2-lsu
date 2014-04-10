@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -298,11 +299,11 @@ int main(int argc, char* argv[]) {
     printf("--TBB is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
-    perform_benchmark(test, 5);
+    // perform_benchmark(test, 5);
 
-    // test.reset();
-    // test();
-    // print_matrix(size, size, &(test.A(0,0)), size);
+    test.reset();
+    test();
+    print_matrix(size, size, &(test.A(0,0)), size);
 
     return 0;
 }

@@ -1,5 +1,5 @@
 
-
+#include <unistd.h>
 #include <iostream>
 #include <iomanip>
 
@@ -39,7 +39,7 @@ struct dgetrf_test
     :N(size_),LDA(N),LDAxN(LDA*N)
     {
         // Allocate A
-        A = (double *)malloc( LDA*N*( sizeof(double) ));
+        A = new double [LDA*N];
 
         // Allocate L and IPIV
         info = PLASMA_Alloc_Workspace_dgetrf_incpiv(N, N, &L, &IPIV);
@@ -47,7 +47,7 @@ struct dgetrf_test
 
     ~dgetrf_test()
     {
-        free(A); free(IPIV); free(L);
+        delete[] A; delete[] IPIV; delete[] L;
     }
 
     void reset()
@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
     //Plasma Initialize
     PLASMA_Init(cores);
 
-    // PLASMA_Disable(PLASMA_AUTOTUNING);
-    // PLASMA_Set(PLASMA_TILE_SIZE, nb);
-    // PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
+    PLASMA_Disable(PLASMA_AUTOTUNING);
+    PLASMA_Set(PLASMA_TILE_SIZE, nb);
+    PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
 
     PLASMA_Set(PLASMA_SCHEDULING_MODE, PLASMA_DYNAMIC_SCHEDULING);
 
@@ -108,10 +108,10 @@ int main(int argc, char* argv[]) {
     printf("-- PLASMA is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
-    perform_benchmark(test, 5);
-    // test.reset();
-    // test();
-    // print_array(size, size, test.A, size);
+    // perform_benchmark(test, 5);
+    test.reset();
+    test();
+    print_array(size, size, test.A, size);
 
 
     PLASMA_Finalize();

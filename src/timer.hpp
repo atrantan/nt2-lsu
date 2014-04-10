@@ -2,11 +2,9 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-
-#include <boost/cstdint.hpp>
-#include <boost/format.hpp>
 #include <sys/time.h>
 #include <iostream>
+#include <algorithm> 
 
 #define FMULS_GETRF(__m, __n) (0.5 * (double)(__n) * \
 ((double)(__n) * ((double)(__m) - (1./3.) * (__n) - 1. ) \
