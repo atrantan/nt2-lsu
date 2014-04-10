@@ -221,9 +221,6 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
     start.try_put(continue_msg()); 
     g.wait_for_all();
 
-    
-    Tiles.push_back(Matrix< continue_node<continue_msg> * >(TILES+1,TILES+1, & start));
-
     for(int k=0; k <TILES; k++)
     {
         std::size_t sizemax = (TILES-k)*(TILES-k);
