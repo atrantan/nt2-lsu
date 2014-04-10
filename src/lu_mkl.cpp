@@ -37,7 +37,10 @@ struct dgetrf_test
     :N(size_),LDA(N),LDAxN(LDA*N)
     {
         // Allocate A
-        A = (double *)malloc(LDA*N*(sizeof*A));
+        A = (double *)malloc( LDA*N*( sizeof(double) ) );
+
+        // Allocate L and IPIV
+        IPIV = (int*)malloc( N*( sizeof(int) ) );
     }
 
     ~dgetrf_test()
@@ -93,7 +96,7 @@ int main(int argc, char* argv[]) {
     printf("-- MKL is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
-    perform_benchmark(test, 10);
+    perform_benchmark(test, 5);
 
     return 0;
 }

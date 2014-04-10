@@ -15,7 +15,7 @@ def parse_file(f, value_name):
 	value_s = '0'
 	for item in items:
 		value_s = item.partition(':')[2]
-		value_s = value_s.partition('ms')[0]
+		value_s = value_s.partition('GFlops')[0]
 	return float(value_s)
 
 def valid_line(f, col):
@@ -45,7 +45,7 @@ def plot_scalability(apps, title,  xlabel, xlabel_range, llabel, llabel_range, d
 					dumpfile_n = "perfs/{0}/{0}_{1}.dump".format(app, dumpfile_n)
 					#get value
 					dumpfile = open(dumpfile_n)
-					total_time = parse_file(dumpfile, "total time")
+					total_time = parse_file(dumpfile, "performances")
 				except IOError:
 					total_time = 0
 				datafile.write(" {0}".format(total_time))
@@ -55,11 +55,10 @@ def plot_scalability(apps, title,  xlabel, xlabel_range, llabel, llabel_range, d
 # ncores = ['12']
 ncores = ['1', '4', '8', '12', '16', '20','24','28','32','36','40','44','48']
 #ncores = ['12']
-psize = ['1000','2000','4000']
+psize = ['12000']
 # psize = ['400', '1200', '2000']
 bsize = ['200']
 # bsize = ['50', '100', '200']
-iterations = 10
 
 #create lu mkl dump directory
 dumpdir = 'perfs/lu_mkl';
@@ -125,26 +124,26 @@ for n in ncores:
 	for s in psize:
 		for b in bsize:
 			dumpfile = dumpdir+"/lu_dataflow_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
-			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_dataflow --s {0} --b {1} > {2}".format(s, b,dumpfile)
+			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_dataflow  -Ihpx.stacks.use_guard_pages=0 --s {0} --b {1} > {2}".format(s, b,dumpfile)
 			print cmdline
 #			os.system(cmdline)
 
-# #create lu hpx dump directory
-# dumpdir = 'perfs/lu_hpx'
-# if not os.path.exists(dumpdir):
-#  	print "creating "+dumpdir+" directory"
-#  	os.makedirs(dumpdir)
+#create lu hpx dump directory
+dumpdir = 'perfs/lu_hpx'
+if not os.path.exists(dumpdir):
+ 	print "creating "+dumpdir+" directory"
+ 	os.makedirs(dumpdir)
 
-# #hpx version
-# for n in ncores:
-# 	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
-# 	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
-# 	for s in psize:
-#  		for b in bsize:
-# 			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
-# 			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_hpx --s {0} --b {1} > {2}".format(s, b,dumpfile)
-# 			print cmdline
-# #			os.system(cmdline)
+#hpx version
+for n in ncores:
+	M = (int(n)//6)+(int(n)%6>0)-1 # number of nodes in function of number of cores
+	numaoptions = "numactl -i 0-{0} ".format(str(M)) if (M>0) else ""
+	for s in psize:
+ 		for b in bsize:
+			dumpfile = dumpdir+"/lu_hpx_problem_size={0}_block_size={1}_ncores={2}.dump".format(s, b, n)
+			cmdline = "srun -p lyra -N 1 -c "+n+" -n 1 "+numaoptions+"./bin/lu_hpx  -Ihpx.stacks.use_guard_pages=0 --s {0} --b {1} > {2}".format(s, b,dumpfile)
+			print cmdline
+#			os.system(cmdline)
 
 # plot_scalability(["lu_hpx"], "Scalability of lu hpx version, for different block sizes over problem size",
 # 								"problem_size", psize, "block_size", bsize,

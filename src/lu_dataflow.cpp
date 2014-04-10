@@ -268,7 +268,7 @@ int hpx_main(boost::program_options::variables_map& vm){
     std::cout << "Running LU factorization" << std::endl;
 
     //LU factorization of the matrix A
-    perform_benchmark(test, 10);
+    perform_benchmark(test, 5);
 
     // test.reset();
     // test();

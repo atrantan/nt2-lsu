@@ -8,25 +8,38 @@
 #include <sys/time.h>
 #include <iostream>
 
+#define FMULS_GETRF(__m, __n) (0.5 * (double)(__n) * \
+((double)(__n) * ((double)(__m) - (1./3.) * (__n) - 1. ) \
++ (double)(__m)) + (2. / 3.) * (__n))
+
+#define FADDS_GETRF(__m, __n) (0.5 * (double)(__n) * ((double)(__n) * \
+((double)(__m) - (1./3.) * (__n)) - (double)(__m)) + (1. / 6.) * (__n))
+
+#define FLOPS_DGETRF(__m, __n) (FMULS_GETRF((__m), (__n)) \
++  FADDS_GETRF((__m), (__n)) )
+
+
+
 unsigned long _timer_h_G_totaltime = 0;
 unsigned long _timer_h_G_starttime = 0;
 unsigned long _timer_h_G_endtime = 0;
 
 void start_timer() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	_timer_h_G_starttime = time.tv_usec + time.tv_sec * 1000000;
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  _timer_h_G_starttime = time.tv_usec + time.tv_sec * 1000000;
 };
 
 void stop_timer() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	_timer_h_G_endtime = time.tv_usec + time.tv_sec * 1000000;
-	_timer_h_G_totaltime = _timer_h_G_endtime - _timer_h_G_starttime;
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  _timer_h_G_endtime = time.tv_usec + time.tv_sec * 1000000;
+  _timer_h_G_totaltime = _timer_h_G_endtime - _timer_h_G_starttime;
 };
 
 void print_timer() {
-	std::cout << "total time:" << ((double)_timer_h_G_totaltime/1000.0) <<  "ms" << std::endl;
+  std::cout << "total time:" << ((double)_timer_h_G_totaltime/1000.0) \
+    <<  "ms" << std::endl;
 }
 
 template<class RandAccessIter, typename T> inline
@@ -53,6 +66,8 @@ void perform_benchmark(Test& test, std::size_t maxiter)
 {
 std::vector<double> time;
 double median_time;
+double perfo;
+std::size_t size = test.N;
 
   for(std::size_t i=0; i<maxiter; i++)
     {
@@ -64,7 +79,11 @@ double median_time;
     }
   median(time.begin(),time.end(), median_time);
 
-  std::cout << "total time:" << median_time <<  "ms" << std::endl;
+  perfo = FLOPS_DGETRF(size,size)/(median_time*1.e6);
+
+  std::cout << "performances:" << \
+  perfo <<  "GFlops" << \
+  std::endl;
 }
 
 #endif
