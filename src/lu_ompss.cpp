@@ -147,7 +147,6 @@ struct dssssm_f
 
   int operator()()
   {
-   printf("dssssm %d %d at %p\n",mm,nn,A);
    CORE_dssssm(nb, n, m, n, nb, ib, &A[k*nb + nn*nb*LDA], LDA, &A[mm*nb + nn*nb*LDA], LDA,
                &L[mm*ib +  k*nb*LDL ], m, &A[mm*nb + k*nb*LDA], LDA, &IPIV[mm*nb+k*LDA]);
    return 0;
@@ -174,24 +173,11 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
 
     int start(1);
 
-    std::vector< Matrix<int *> > Tiles;
+    std::vector< Matrix<int> > Tiles;
     Tiles.reserve(TILES);
 
-    Tiles.push_back(Matrix< int * >(TILES+1,TILES+1, & start));
-
-    for(int k=0; k <TILES; k++)
-    {
-      Tiles.push_back(Matrix< int * >(TILES-k,TILES-k));
-
-      std::size_t sizemax = (TILES-k)*(TILES-k);
-
-      for(int i=0; i <sizemax; i++)
-      {
-        (Tiles[k+1].data)[i] = new int;
-      }
-
-    }
-
+    Tiles.push_back(Matrix< int >(TILES+1,TILES+1, 1));
+   
     int* start_dep(&start);
 
     #pragma omp task firstprivate(start_dep) out(start_dep)
@@ -205,8 +191,8 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
     int km = (k==TILES-1) ? M - k*m : m;
     int kn = (k==TILES-1) ? N - k*n : n;
 
-    in1_dep = Tiles[src](1,1);
-    out_dep =Tiles[dst](0,0);
+    in1_dep = &( Tiles[src](1,1) );
+    out_dep = &( Tiles[dst](0,0) );
 
     //step 1
     #pragma omp task \
@@ -223,9 +209,9 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
 
       int m_ = (mm==TILES-1) ? M -mm*m : m;
 
-     in1_dep = Tiles[dst](mm-k-1,0); 
-     in2_dep = Tiles[src](mm-k+1,1);
-     out_dep = Tiles[dst](mm-k,0);
+     in1_dep = &( Tiles[dst](mm-k-1,0) ); 
+     in2_dep = &( Tiles[src](mm-k+1,1) );
+     out_dep = &( Tiles[dst](mm-k,0) );
 
 
       #pragma omp task \
@@ -242,9 +228,9 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
 
     int n_ = (nn==TILES-1) ? N - nn*n : n;
 
-    in1_dep = Tiles[dst](0,0); 
-    in2_dep = Tiles[src](1,nn-k+1);
-    out_dep = Tiles[dst](0,nn-k);
+    in1_dep = &( Tiles[dst](0,0) ); 
+    in2_dep = &( Tiles[src](1,nn-k+1) );
+    out_dep = &( Tiles[dst](0,nn-k) );
 
       #pragma omp task \
         firstprivate(in1_dep,in2_dep,out_dep) \
@@ -263,10 +249,10 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
                 int m_ = (mm==TILES-1) ? M - mm*m : m;
                 int n_ = (nn==TILES-1) ? N - nn*n : n;
 
-                in1_dep= Tiles[dst](mm-k,0) ; 
-                in2_dep= Tiles[dst](mm-k-1,nn-k) ;
-                in3_dep= Tiles[src](mm-k+1,nn-k+1) ;
-                out_dep= Tiles[dst](mm-k,nn-k) ;
+                in1_dep= &( Tiles[dst](mm-k,0) ); 
+                in2_dep= &( Tiles[dst](mm-k-1,nn-k) );
+                in3_dep= &( Tiles[src](mm-k+1,nn-k+1) );
+                out_dep= &( Tiles[dst](mm-k,nn-k) );
 
                  #pragma omp task \
                   firstprivate(in1_dep,in2_dep, in3_dep, out_dep)\
@@ -283,16 +269,6 @@ int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LD
     }
 
     #pragma omp taskwait
-
-    for(int k=0; k <TILES; k++)
-    {
-        std::size_t sizemax = (TILES-k)*(TILES-k);
-
-        for(int i=0; i <sizemax; i++)
-        {
-          delete( (Tiles[k+1].data)[i] );
-        }
-    }
 
     return 0;
 };
