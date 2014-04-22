@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <omp.h>
 #include <iostream>
 #include <iomanip>
 
@@ -89,6 +90,8 @@ int main(int argc, char* argv[]) {
             default:
                 break;
         }
+
+    omp_set_num_threads(cores);
 
     dgetrf_test test(size);
 

@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
     //Plasma Initialize
     PLASMA_Init(cores);
 
-    PLASMA_Disable(PLASMA_AUTOTUNING);
-    PLASMA_Set(PLASMA_TILE_SIZE, nb);
-    PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
+    // PLASMA_Disable(PLASMA_AUTOTUNING);
+    // PLASMA_Set(PLASMA_TILE_SIZE, nb);
+    // PLASMA_Set(PLASMA_INNER_BLOCK_SIZE, nb);
 
     PLASMA_Set(PLASMA_SCHEDULING_MODE, PLASMA_DYNAMIC_SCHEDULING);
 
@@ -108,10 +108,10 @@ int main(int argc, char* argv[]) {
     printf("-- PLASMA is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
-    // perform_benchmark(test, 5);
-    test.reset();
-    test();
-    print_array(size, size, test.A, size);
+    perform_benchmark(test, 5);
+    // test.reset();
+    // test();
+    // print_array(size, size, test.A, size);
 
 
     PLASMA_Finalize();

@@ -40,33 +40,35 @@ void print_matrix(int M, int N, double *A, int LDA) {
 struct dgetrf_f
 {
 
-   dgetrf_f(Matrix<double> & A_,
+   dgetrf_f(
+    double * A_,
     int m_,
     int n_,
     int nb_,
     int ib_,
     int k_,
     int LDA_,
-    std::vector<int> & IPIV_
+    int * IPIV_
     )
   :A(A_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),LDA(LDA_),IPIV(IPIV_)
   {}
 
   void operator()()
   {
-    CORE_dgetrf_incpiv(m, n, ib, &A(k*nb,k*nb), LDA, &IPIV[k*nb+k*LDA], &info);
+    CORE_dgetrf_incpiv(m, n, ib, &A[k*nb + k*nb*LDA], LDA, &IPIV[k*nb+k*LDA], &info);
   }
 
-  Matrix<double> & A;
+  double * A;
   int m,n,nb,ib,k,info,LDA;
-  std::vector<int> & IPIV;
+  int * IPIV;
 };
 
 struct dtstrf_f
 {
 
-   dtstrf_f(    Matrix<double> & A_,
-    Matrix<double> & L_,
+   dtstrf_f(
+    double * A_,
+    double * L_,
     int m_,
     int n_,
     int nb_,
@@ -74,29 +76,32 @@ struct dtstrf_f
     int k_,
     int mm_,
     int LDA_,
-    std::vector<int> & IPIV_
+    int LDL_,
+    int * IPIV_
     )
-  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_),LDA(LDA_),
-   IPIV(IPIV_)
+  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_)
+  ,LDA(LDA_),LDL(LDL_),IPIV(IPIV_)
   {}
 
 
   void operator()()
   {
     std::vector<double> work(m*n);
-    CORE_dtstrf(m, n, ib, n, &A(k*nb,k*nb), LDA, &A(mm*nb,k*nb), LDA,
-                &L(mm*ib,k*nb), nb, &IPIV[mm*nb+k*LDA], &work[0], nb, &info);
+    CORE_dtstrf(m, n, ib, n, &A[k*nb + k*nb*LDA], LDA, &A[mm*nb + k*nb*LDA]
+     , LDA, &L[mm*ib + k*nb*LDL], nb, &IPIV[mm*nb+k*LDA], &work[0], nb, &info);
   }
 
-  Matrix<double> & A, & L;
-  int m,n,nb,ib,k,mm,info,LDA;
-  std::vector<int> & IPIV;
+  double * A;
+  double * L;
+  int m,n,nb,ib,k,mm,info,LDA,LDL;
+  int * IPIV;
 };
 
 struct dgessm_f
 {
 
-   dgessm_f(    Matrix<double> & A_,
+   dgessm_f(
+    double * A_,
     int m_,
     int n_,
     int nb_,
@@ -104,7 +109,7 @@ struct dgessm_f
     int k_,
     int nn_,
     int LDA_,
-    std::vector<int> & IPIV_
+    int * IPIV_
     )
   :A(A_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),nn(nn_),LDA(LDA_),
    IPIV(IPIV_)
@@ -113,20 +118,21 @@ struct dgessm_f
 
   void operator()()
   {
-   CORE_dgessm(m, n, m, ib, &IPIV[k*nb+k*LDA], &A(k*nb,k*nb), LDA,
-     &A(k*nb,nn*nb), LDA);
+   CORE_dgessm(m, n, m, ib, &IPIV[k*nb+k*LDA], &A[k*nb + k*nb*LDA], LDA,
+     &A[k*nb + nn*nb*LDA], LDA);
   }
 
-  Matrix<double> & A;
+  double * A;
   int m,n,nb,ib,k,nn,LDA;
-  std::vector<int> & IPIV;
+  int * IPIV;
 };
 
 
 struct dssssm_f
 {
-   dssssm_f(    Matrix<double> & A_,
-    Matrix<double> & L_,
+   dssssm_f(   
+    double * A_,
+    double * L_,
     int m_,
     int n_,
     int nb_,
@@ -135,24 +141,27 @@ struct dssssm_f
     int mm_,
     int nn_,
     int LDA_,
-    std::vector<int> & IPIV_
+    int LDL_,
+    int * IPIV_
     )
-  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_),nn(nn_),LDA(LDA_),IPIV(IPIV_)
+  :A(A_),L(L_),m(m_),n(n_),nb(nb_),ib(ib_),k(k_),mm(mm_),nn(nn_)
+  ,LDA(LDA_),LDL(LDL_),IPIV(IPIV_)
   {}
 
 
   void operator()()
   {
-   CORE_dssssm(nb, n, m, n, nb, ib, &A(k*nb,nn*nb), LDA, &A(mm*nb,nn*nb), LDA,
-               &L(mm*ib,k*nb), m, &A(mm*nb,k*nb), LDA, &IPIV[mm*nb+k*LDA]);
+   CORE_dssssm(nb, n, m, n, nb, ib, &A[k*nb + nn*nb*LDA], LDA, &A[mm*nb + nn*nb*LDA]
+    , LDA, &L[mm*ib + k*nb*LDL], m, &A[mm*nb + k*nb*LDA], LDA, &IPIV[mm*nb+k*LDA]);
   }
 
-  Matrix<double> & A, & L;
-  int m,n,nb,ib,k,mm,nn,LDA;
-  std::vector<int> & IPIV;
+  double * A;
+  double * L;
+  int m,n,nb,ib,k,mm,nn,LDA,LDL;
+  int * IPIV;
 };
 
-int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<double>& L, std::vector<int>& IPIV) {
+int dgetrf(int M, int N, int nb, int ib, double * A, int LDA, double * L, int LDL, int * IPIV) {
 
     int TILES = M/nb;
     int m = M/TILES;
@@ -161,7 +170,7 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
     int src(0), dst(1);
 
     std::vector< Matrix<TileFuture> > Tiles;
-    Tiles.reserve(TILES);
+    Tiles.reserve(TILES+1);
 
     Tiles.push_back(Matrix<TileFuture>(TILES+1,TILES+1,hpx::lcos::make_ready_future()));
 
@@ -182,7 +191,7 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
 
       int m_ = (mm==TILES-1) ? M -mm*m : m;
 
-      Tiles[dst](mm-k,0) = dataflow(unwrapped(dtstrf_f(A,L,m_,kn,nb,ib,k,mm,LDA,IPIV)),
+      Tiles[dst](mm-k,0) = dataflow(unwrapped(dtstrf_f(A,L,m_,kn,nb,ib,k,mm,LDA,LDL,IPIV)),
                                     Tiles[dst](mm-k-1,0),
                                     Tiles[src](mm-k+1,1)
                                    );
@@ -206,7 +215,7 @@ int dgetrf(int M, int N, int nb, int ib, Matrix<double>& A, int LDA, Matrix<doub
                 int m_ = (mm==TILES-1) ? M - mm*m : m;
                 int n_ = (nn==TILES-1) ? N - nn*n : n;
 
-                Tiles[dst](mm-k,nn-k) = dataflow(unwrapped(dssssm_f(A,L,m_,n_,nb,ib,k,mm,nn,LDA,IPIV)),
+                Tiles[dst](mm-k,nn-k) = dataflow(unwrapped(dssssm_f(A,L,m_,n_,nb,ib,k,mm,nn,LDA,LDL,IPIV)),
                                                  Tiles[dst](mm-k,0),
                                                  Tiles[dst](mm-k-1,nn-k),
                                                  Tiles[src](mm-k+1,nn-k+1)
@@ -227,19 +236,28 @@ struct dgetrf_test
 {
     dgetrf_test(std::size_t size_,std::size_t nb_, std::size_t ib_)
     :N(size_),LDA(N),LDL(ib_*(LDA/nb_)),LDAxN(LDA*N),nb(nb_),ib(ib_)
-    ,A(LDA,N),L(LDL,N),IPIV(N*LDA/nb_)
-    {}
+    {
+       A = new double[LDA*N];
+       L = new double [LDL*N];
+       IPIV = new int [N*LDA/nb_];
+    }
 
+    ~dgetrf_test()
+    {
+      delete[] A;
+      delete[] L;
+      delete[] IPIV;
+    }
 
     void reset()
     {
         /* Initialize A Matrix */
-        dlarnv(&IONE, ISEED, &LDAxN, &A(0,0));
+        dlarnv(&IONE, ISEED, &LDAxN, &A[0]);
     }
 
     void operator()()
     {
-       info = dgetrf(N, N, nb, ib, A, LDA, L, IPIV);
+       info = dgetrf(N, N, nb, ib, A, LDA, L, LDL, IPIV);
     }
 
     int N;
@@ -250,9 +268,9 @@ struct dgetrf_test
     int nb;
     int ib;
 
-    Matrix<double> A;
-    Matrix<double> L;
-    std::vector<int> IPIV;
+    double * A;
+    double * L;
+    int * IPIV;
 
 };
 
@@ -270,9 +288,9 @@ int hpx_main(boost::program_options::variables_map& vm){
     //LU factorization of the matrix A
     perform_benchmark(test, 5);
 
-    // test.reset();
-    // test();
-    // print_matrix(size, size, &(test.A(0,0)), size);
+//     test.reset();
+//     test();
+//     print_matrix(size, size, &(test.A[0]), size);
 
     return hpx::finalize(); // Handles HPX shutdown
 }

@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <unistd.h>
 #include <iostream>
 #include <iomanip>
@@ -47,7 +48,6 @@ struct dgetrf_f
 
   int operator()()
   {
-    printf("dgetrf %d %d at %p\n",k,k,A);
     CORE_dgetrf_incpiv(m, n, ib, &A[k*nb + k*nb*LDA], LDA, &IPIV[k*nb+k*LDA], &info);
     return 0;
   }
@@ -81,7 +81,6 @@ struct dtstrf_f
   int operator()()
   {
     std::vector<double> work(m*n);
-    printf("dtstrf %d %d at %p\n",mm,k,A);
     CORE_dtstrf(m, n, ib, n, &A[k*nb + k*nb*LDA], LDA, &A[mm*nb + k*nb*LDA], LDA,
                 &L[mm*ib + k*nb*LDL], nb, &IPIV[mm*nb+k*LDA], &work[0], nb, &info);
     return 0;
@@ -113,7 +112,6 @@ struct dgessm_f
 
   int operator()()
   {
-   printf("dgessm %d %d at %p\n",k,nn,A);
    CORE_dgessm(m, n, m, ib, &IPIV[k*nb+k*LDA], &A[k*nb + k*nb*LDA], LDA,
      &A[k*nb + nn*nb*LDA], LDA);
    return 0;
@@ -319,7 +317,6 @@ int main(int argc, char* argv[]) {
 
         int size = DEFAULT_SIZE;
         int nb = DEFAULT_NB;
-        std::size_t ib = (nb<40) ? nb : 40;
 
         int cores = DEFAULT_CORES;
         char c;
@@ -338,17 +335,21 @@ int main(int argc, char* argv[]) {
                 break;
         }
 
+    
+      std::size_t ib = (nb<40) ? nb : 40;
+      omp_set_num_threads(cores);
+
     dgetrf_test test(size,nb,ib);
 
     printf("--OMPSS is initialized to run on %d cores. \n",cores);
 
     //LU factorization of the matrix A
-    // perform_benchmark(test, 5);
+    perform_benchmark(test, 5);
 
-    test.reset();
-    print_matrix(size, size, &(test.A[0]), size);
-    test();
-    print_matrix(size, size, &(test.A[0]), size);
+    // test.reset();
+    // print_matrix(size, size, &(test.A[0]), size);
+    // test();
+    // print_matrix(size, size, &(test.A[0]), size);
 
     return 0;
 }
